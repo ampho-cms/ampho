@@ -28,8 +28,8 @@ setup(
     version=version,
     url=f'https://github.com/{GITHUB_USER}/{PKG_NAME}',
     project_urls={
-        'Documentation': f'https://github.com/{GITHUB_USER}/{PKG_NAME}',
         'Code': f'https://github.com/{GITHUB_USER}/{PKG_NAME}',
+        'Documentation': f'https://{PKG_NAME}.readthedocs.io',
         'Issue tracker': f'https://github.com/{GITHUB_USER}/{PKG_NAME}/issues',
     },
     license=lic,
