@@ -10,6 +10,11 @@ class AmphoError(Exception):
     pass
 
 
+class BundleNotFoundError(AmphoError):
+    """Bundle's module is not found
+    """
+
+
 class BundleAlreadyRegisteredError(AmphoError):
     """Bundle with the same name is already registered
     """

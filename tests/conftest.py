@@ -11,6 +11,7 @@ import string
 import random
 import json
 import ampho
+from typing import Tuple, Callable
 
 
 def rand_str() -> str:
@@ -27,17 +28,41 @@ def create_package(pkg_dir_path, content: str = ''):
         f.write(content)
 
 
+@pytest.fixture
+def random_bundle(tmp_path: str) -> Callable:
+    def f() -> Tuple[str, str]:
+        pkg_name = rand_str()
+        view_name = rand_str()
+
+        pkg_path = os.path.join(tmp_path, pkg_name)
+        create_package(pkg_path, (
+            'def init_bundle(bundle):\n'
+            '    pass'
+        ))
+
+        # Create bundle view module and function
+        with open(os.path.join(pkg_path, 'view.py'), 'wt') as f:
+            f.write(
+                'from flask import g\n\n'
+                '@g.bundle.route("/<name>")\n'
+                f'def {view_name}(name):\n'
+                '    return name\n'
+            )
+
+        return pkg_name, view_name
+
+    return f
+
+
 @pytest.fixture()
-def app(tmp_path: str):
+def app(tmp_path: str, random_bundle: Callable):
     """Application fixture
     """
     # Add tmp_path to search path
     sys.path.append(str(tmp_path))
 
-    # Create application's package
-    app_pkg_name = rand_str()
-    app_pkg_path = os.path.join(tmp_path, app_pkg_name)
-    create_package(app_pkg_path)
+    # Create app's bundle
+    app_pkg_name, app_view_name = random_bundle()
 
     # Create instance dir
     instance_dir = os.path.join(tmp_path, 'instance')
@@ -49,28 +74,11 @@ def app(tmp_path: str):
     with open(config_path, 'wt') as f:
         json.dump(config, f)
 
-    # Create bundle package
-    bundle_pkg_name = rand_str()
-    bundle_pkg_path = os.path.join(app_pkg_path, bundle_pkg_name)
-    create_package(bundle_pkg_path, (
-        'def init_bundle(bundle):\n'
-        '    pass'
-    ))
-
-    # Create bundle view module and function
-    view_name = rand_str()
-    with open(os.path.join(bundle_pkg_path, 'view.py'), 'wt') as f:
-        f.write(
-            'from flask import g\n\n'
-            '@g.bundle.route("/<name>")\n'
-            f'def {view_name}(name):\n'
-            '    return name\n'
-        )
-
     # Create application instance
-    app = ampho.Application(app_pkg_name, [f'{app_pkg_name}.{bundle_pkg_name}'])
+    app = ampho.Application([f'{app_pkg_name}'], root_path=tmp_path)
+
 
     # Check if the config was loaded
     assert app.config.get(list(config.keys())[0]) == list(config.values())[0]
 
-    return app_pkg_name, app
+    return app
