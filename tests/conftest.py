@@ -41,10 +41,10 @@ def random_bundle(tmp_path: str) -> Callable:
         ))
 
         # Create bundle view module and function
-        with open(os.path.join(pkg_path, 'view.py'), 'wt') as f:
+        with open(os.path.join(pkg_path, 'views.py'), 'wt') as f:
             f.write(
                 'from flask import g\n\n'
-                '@g.bundle.route("/<name>")\n'
+                '@g.route("/<name>")\n'
                 f'def {view_name}(name):\n'
                 '    return name\n'
             )
@@ -54,7 +54,7 @@ def random_bundle(tmp_path: str) -> Callable:
     return f
 
 
-@pytest.fixture()
+@pytest.fixture
 def app(tmp_path: str, random_bundle: Callable):
     """Application fixture
     """
@@ -76,7 +76,6 @@ def app(tmp_path: str, random_bundle: Callable):
 
     # Create application instance
     app = ampho.Application([f'{app_pkg_name}'], root_path=tmp_path)
-
 
     # Check if the config was loaded
     assert app.config.get(list(config.keys())[0]) == list(config.values())[0]

@@ -52,8 +52,10 @@ class Bundle:
         with app.app_context():
             try:
                 self._module = module = import_module(module_name)
+                if not module.__file__:
+                    raise ImportError()
             except ImportError:
-                raise BundleNotFoundError(f"Bundle's module '{module_name}' is not found")
+                raise BundleNotFoundError(module_name)
 
         # Bundle's properties
         name = name or getattr(module, 'BUNDLE_NAME', name) or module_name
@@ -84,11 +86,12 @@ class Bundle:
         if hasattr(module, 'init_bundle') and callable(module.init_bundle):
             module.init_bundle(self)
 
-        # Initialize views and commands
-        for sub_module_name in ('view', 'command'):
+        # Initialize bundle's parts
+        for sub_module_name in ('views', 'commands'):
             try:
                 with app.app_context() as ctx:
-                    ctx.g.bundle = self
+                    ctx.g.route = self.route
+                    ctx.g.command = self.command
                     import_module(f'{module_name}.{sub_module_name}')
             except ModuleNotFoundError:
                 pass

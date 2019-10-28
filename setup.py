@@ -1,3 +1,4 @@
+#!/bin/env python
 """Ampho setup.py
 """
 __author__ = 'Oleksandr Shepetko'
@@ -48,6 +49,7 @@ setup(
         'Operating System :: OS Independent',
         'Programming Language :: Python',
         'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
         'Topic :: Internet :: WWW/HTTP :: Dynamic Content',
         'Topic :: Internet :: WWW/HTTP :: WSGI :: Application',
         'Topic :: Software Development :: Libraries :: Application Frameworks',
@@ -60,4 +62,9 @@ setup(
     install_requires=[
         'flask==1.*',
     ],
+    entry_points={
+        'console_scripts': [
+            'ampho = ampho._cli:main'
+        ]
+    },
 )
