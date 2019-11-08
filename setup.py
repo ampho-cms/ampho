@@ -61,6 +61,7 @@ setup(
     python_requires='>=3.7',
     install_requires=[
         'flask==1.*',
+        'babel>=2019.2',
     ],
     entry_points={
         'console_scripts': [

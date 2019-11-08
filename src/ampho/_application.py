@@ -9,6 +9,7 @@ from copy import copy
 from os import getenv, getcwd
 from os.path import join as path_join, isfile
 from flask import Flask
+from .error import BundleNotFoundError
 from ._bundle import Bundle
 
 
@@ -48,6 +49,9 @@ class Application(Flask):
             config_path = path_join(self.instance_path, config_name) + '.json'
             if isfile(config_path):
                 self.config.from_json(config_path)
+
+        # Builtin bundles
+        bundles.extend(['ampho.locale'])
 
         # Merge bundles list from configuration
         bundles.extend(self.config.get('BUNDLES', []))
@@ -94,3 +98,11 @@ class Application(Flask):
         bundle.init()
 
         return bundle
+
+    def get_bundle(self, name: str) -> Bundle:
+        """Get a bundle object
+        """
+        if name not in self._bundles:
+            raise BundleNotFoundError(name)
+
+        return self._bundles[name]
