@@ -10,6 +10,7 @@ from flask import g, current_app
 from babel.messages.frontend import CommandLineInterface as BabelCLI
 from ampho import Bundle
 
+_bundle = g.bundle  # type: Bundle
 
 def _get_babel_cli() -> BabelCLI:
     return BabelCLI()
@@ -32,41 +33,43 @@ def _get_bundle_lang_dir(bundle_name: str, ensure: bool = False):
     return dir_path
 
 
-@g.command('extract')
+@g.bundle.command('extract')
 @click.argument('bundle')
 def extract(bundle: str):
     """Extract messages to a POT file
     """
+    mappings_f_path = path.join(_bundle.root_dir, 'res', 'babel.ini')
     inp_d_path = _get_bundle(bundle).root_dir
-    out_f_path = path.join(_get_bundle_lang_dir(bundle), 'messages.pot')
-    _get_babel_cli().run(['babel', 'extract', '-o', out_f_path, inp_d_path])
+    out_f_path = path.join(_get_bundle_lang_dir(bundle), f'{bundle}.pot')
+    _get_babel_cli().run(['babel', 'extract', '--no-location', '--omit-header', '--sort-output',
+                          '-F', mappings_f_path, '-o', out_f_path, inp_d_path])
 
 
-@g.command('init')
+@g.bundle.command('init')
 @click.argument('bundle')
 @click.argument('locale')
 def init(bundle: str, locale: str):
     """Init a new PO file
     """
     out_d_path = _get_bundle_lang_dir(bundle)
-    inp_f_path = path.join(out_d_path, 'messages.pot')
-    _get_babel_cli().run(['babel', 'init', '-l', locale, '-i', inp_f_path, '-d', out_d_path])
+    inp_f_path = path.join(out_d_path, f'{bundle}.pot')
+    _get_babel_cli().run(['babel', 'init', '-D', bundle, '-l', locale, '-i', inp_f_path, '-d', out_d_path])
 
 
-@g.command('update')
+@g.bundle.command('update')
 @click.argument('bundle')
 @click.argument('locale')
 def update(bundle: str, locale: str):
     """Update an existing PO file
     """
     out_d_path = _get_bundle_lang_dir(bundle)
-    inp_f_path = path.join(out_d_path, 'messages.pot')
-    _get_babel_cli().run(['babel', 'update', '-l', locale, '-i', inp_f_path, '-d', out_d_path])
+    inp_f_path = path.join(out_d_path, f'{bundle}.pot')
+    _get_babel_cli().run(['babel', 'update', '-D', bundle, '-l', locale, '-i', inp_f_path, '-d', out_d_path])
 
 
-@g.command('compile')
+@g.bundle.command('compile')
 @click.argument('bundle')
 def compile(bundle):
     """Compile translations
     """
-    _get_babel_cli().run(['babel', 'compile', '-d', _get_bundle_lang_dir(bundle)])
+    _get_babel_cli().run(['babel', 'compile', '-D', bundle, '-d', _get_bundle_lang_dir(bundle)])
