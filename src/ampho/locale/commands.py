@@ -5,71 +5,63 @@ __email__ = 'a@shepetko.com'
 __license__ = 'MIT'
 
 import click
-from os import path, makedirs
-from flask import g, current_app
+from typing import Tuple
+from os import path
+from ampho import Bundle, g, current_app
 from babel.messages.frontend import CommandLineInterface as BabelCLI
-from ampho import Bundle
 
 _bundle = g.bundle  # type: Bundle
 
-def _get_babel_cli() -> BabelCLI:
-    return BabelCLI()
 
-
-def _get_bundle(bundle_name: str) -> Bundle:
-    """Get a bundle by name
-    """
-    return current_app.get_bundle(bundle_name)
-
-
-def _get_bundle_lang_dir(bundle_name: str, ensure: bool = False):
-    """Get bundle's translations catalogs dir
-    """
-    dir_path = path.join(_get_bundle(bundle_name).root_dir, 'locale')
-
-    if ensure and not path.isdir(dir_path):
-        makedirs(dir_path, 0o755)
-
-    return dir_path
-
-
-@g.bundle.command('extract')
-@click.argument('bundle')
-def extract(bundle: str):
+@_bundle.command('extract')
+@click.argument('bundles', nargs=-1)
+def extract_cmd(bundles: Tuple[str, ...]):
     """Extract messages to a POT file
     """
-    mappings_f_path = path.join(_bundle.root_dir, 'res', 'babel.ini')
-    inp_d_path = _get_bundle(bundle).root_dir
-    out_f_path = path.join(_get_bundle_lang_dir(bundle), f'{bundle}.pot')
-    _get_babel_cli().run(['babel', 'extract', '--no-location', '--omit-header', '--sort-output',
-                          '-F', mappings_f_path, '-o', out_f_path, inp_d_path])
+    for b_name in bundles or _bundle.app.bundles:
+        b = current_app.get_bundle(b_name)
+        if not b.locale_dir:
+            continue
+
+        out_f_path = path.join(b.locale_dir, f'{b_name}.pot')
+        BabelCLI().run(['babel', 'extract', '--no-location', '--omit-header', '--sort-output',
+                        '-F', _bundle.res_path('babel.ini'), '-o', out_f_path, b.root_dir])
 
 
-@g.bundle.command('init')
-@click.argument('bundle')
+@_bundle.command('init')
 @click.argument('locale')
-def init(bundle: str, locale: str):
+@click.argument('bundle')
+def init_cmd(bundle: str, locale: str):
     """Init a new PO file
     """
-    out_d_path = _get_bundle_lang_dir(bundle)
-    inp_f_path = path.join(out_d_path, f'{bundle}.pot')
-    _get_babel_cli().run(['babel', 'init', '-D', bundle, '-l', locale, '-i', inp_f_path, '-d', out_d_path])
+    b = current_app.get_bundle(bundle)
+    inp_f_path = path.join(b.locale_dir, f'{b.name}.pot')
+    BabelCLI().run(['babel', 'init', '-D', bundle, '-l', locale, '-i', inp_f_path, '-d', b.locale_dir])
 
 
-@g.bundle.command('update')
-@click.argument('bundle')
+@_bundle.command('update')
 @click.argument('locale')
-def update(bundle: str, locale: str):
+@click.argument('bundles', nargs=-1)
+def update_cmd(locale: str, bundles: Tuple[str, ...]):
     """Update an existing PO file
     """
-    out_d_path = _get_bundle_lang_dir(bundle)
-    inp_f_path = path.join(out_d_path, f'{bundle}.pot')
-    _get_babel_cli().run(['babel', 'update', '-D', bundle, '-l', locale, '-i', inp_f_path, '-d', out_d_path])
+    for b_name in bundles or _bundle.app.bundles:
+        b = current_app.get_bundle(b_name)
+        if not b.locale_dir:
+            continue
+
+        inp_f_path = path.join(b.locale_dir, f'{b.name}.pot')
+        BabelCLI().run(['babel', 'update', '-D', b.name, '-l', locale, '-i', inp_f_path, '-d', b.locale_dir])
 
 
-@g.bundle.command('compile')
-@click.argument('bundle')
-def compile(bundle):
+@_bundle.command('compile')
+@click.argument('bundles', nargs=-1)
+def compile_cmd(bundles):
     """Compile translations
     """
-    _get_babel_cli().run(['babel', 'compile', '-D', bundle, '-d', _get_bundle_lang_dir(bundle)])
+    for b_name in bundles or _bundle.app.bundles:
+        b = current_app.get_bundle(b_name)
+        if not b.locale_dir:
+            continue
+
+        BabelCLI().run(['babel', 'compile', '-D', b.name, '-d', b.locale_dir])

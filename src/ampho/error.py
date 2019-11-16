@@ -6,7 +6,8 @@ __license__ = 'MIT'
 
 
 class AmphoError(Exception):
-    """Base Ampho error"""
+    """Base Ampho error
+    """
     pass
 
 

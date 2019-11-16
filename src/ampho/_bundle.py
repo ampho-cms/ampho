@@ -96,7 +96,6 @@ class Bundle:
         self._bp.cli.help = kwargs.get('cli_help', getattr(module, 'BUNDLE_CLI_HELP', None))
 
         # Bind gettext's domain
-        self._locale_dir = None
         if self._locale_dir:
             bindtextdomain(self._name, self._locale_dir)
 
@@ -104,25 +103,12 @@ class Bundle:
         for sub_module_name in ('views', 'commands'):
             try:
                 with app.app_context() as ctx:
-                    ctx.g.bundle = self
+                    ctx.g.bundle = self  # Make current bundle accessible in the currently imported module
                     import_module(f'{module_name}.{sub_module_name}')
             except ModuleNotFoundError:
                 pass
 
         app.register_blueprint(self._bp)
-
-    def __repr__(self) -> str:
-        """__repr__()
-        """
-        return str({
-            'name': self._name,
-            'root_dir': self._root_dir,
-            'static_dir': self._static_dir,
-            'tpl_dir': self._tpl_dir,
-            'subdomain': self._subdomain,
-            'url_prefix': self._url_prefix,
-            'url_defaults': self._url_defaults,
-        })
 
     @property
     def module(self) -> ModuleType:
@@ -155,6 +141,18 @@ class Bundle:
         """Bundle's root path
         """
         return self._root_dir
+
+    @property
+    def locale_dir(self) -> Optional[str]:
+        """Bundle's locale dir location
+        """
+        return self._locale_dir
+
+    @property
+    def res_dir(self) -> Optional[str]:
+        """Bundle's resource dir location
+        """
+        return self._res_dir
 
     @property
     def static_dir(self) -> Optional[str]:
@@ -205,11 +203,15 @@ class Bundle:
         """
         return self._bp.cli.command
 
+    def res_path(self, filename: str) -> str:
+        """Get a resource file path
+        """
+        return path_join(self.res_dir, filename)
+
     def gettext(self, s: str) -> str:
         """Get translation of a string
-
         """
-        return dgettext(self.name, s)
+        return dgettext(self._name, s)
 
     def render_tpl(self, tpl: str, **args) -> str:
         """Render a template

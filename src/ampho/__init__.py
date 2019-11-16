@@ -7,5 +7,7 @@ __license__ = 'MIT'
 __version__ = '0.0.1'
 
 # Public API
+from flask import g
+from ._api import current_app, request, session
 from ._application import Application
 from ._bundle import Bundle
