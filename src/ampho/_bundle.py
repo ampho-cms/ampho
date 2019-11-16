@@ -70,7 +70,7 @@ class Bundle:
             setattr(self, f'_{d_name}_dir', d_path if isdir(d_path) else None)
 
         # Routes URLs defaults
-        self._url_defaults = kwargs.get('url_defaults', getattr(module, 'BUNDLE_URL_DEFAULTS', None))  # type: dict
+        self._url_defaults = kwargs.get('url_defaults', getattr(module, 'BUNDLE_URL_DEFAULTS', {}))  # type: dict
 
         # Routes URL prefix
         self._url_prefix = kwargs.get('url_prefix', getattr(module, 'BUNDLE_URL_PREFIX', None))  # type: str
@@ -179,7 +179,7 @@ class Bundle:
         return self._url_prefix
 
     @property
-    def url_defaults(self) -> Optional[dict]:
+    def url_defaults(self) -> dict:
         """Bundle's URL defaults
         """
         return self._url_defaults

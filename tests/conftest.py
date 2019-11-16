@@ -36,15 +36,16 @@ def random_bundle(tmp_path: str) -> Callable:
 
         pkg_path = os.path.join(tmp_path, pkg_name)
         create_package(pkg_path, (
-            'def init_bundle(bundle):\n'
+            'def init(bundle):\n'
             '    pass'
         ))
 
         # Create bundle view module and function
         with open(os.path.join(pkg_path, 'views.py'), 'wt') as f:
             f.write(
-                'from flask import g\n\n'
-                '@g.route("/<name>")\n'
+                'from ampho import g\n'
+                'bundle = g.bundle\n'
+                '@bundle.route("/<name>")\n'
                 f'def {view_name}(name):\n'
                 '    return name\n'
             )
