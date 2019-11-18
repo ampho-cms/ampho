@@ -11,22 +11,33 @@ class AmphoError(Exception):
     pass
 
 
-class BundleNotFoundError(AmphoError):
+class BundleError(AmphoError):
     """Bundle's module is not found
     """
-
-    @property
-    def name(self) -> str:
-        return self._name
 
     def __init__(self, name: str):
         self._name = name
 
+
+class BundleImportError(BundleError):
+    """Error while
+    """
+
     def __str__(self) -> str:
-        return f"Bundle's module '{self._name}' is not found"
+        return f"Bundle's module '{self._name}' cannot be imported"
 
 
-class BundleAlreadyRegisteredError(AmphoError):
+class BundleNotRegisteredError(BundleError):
+    """Bundle with the specified name is not registered
+    """
+
+    def __str__(self) -> str:
+        return f"Bundle '{self._name}' is not registered"
+
+
+class BundleAlreadyRegisteredError(BundleError):
     """Bundle with the same name is already registered
     """
-    pass
+
+    def __str__(self) -> str:
+        return f"Bundle '{self._name}' is already registered"

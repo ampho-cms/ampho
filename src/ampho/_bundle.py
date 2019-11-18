@@ -11,7 +11,7 @@ from importlib import import_module
 from os.path import isdir, join as path_join, dirname, basename
 from flask import Blueprint, render_template
 from flask.cli import AppGroup
-from .error import BundleNotFoundError, BundleAlreadyRegisteredError
+from .error import BundleImportError
 
 
 class Bundle:
@@ -41,22 +41,18 @@ class Bundle:
         ``BUNDLE_URL_DEFAULTS`` module's property will be used.
     """
 
-    def __init__(self, app, module_name: str, **kwargs):
+    def __init__(self, module_name: str, **kwargs):
         """Init
-
-        :type app: ampho.Application
         """
-        self._app = app
+        try:
+            self._module = module = import_module(module_name)
+            if not module.__file__:
+                raise ImportError()
+        except ImportError:
+            raise BundleImportError(module_name)
 
-        with app.app_context():
-            try:
-                self._module = module = import_module(module_name)
-                if not module.__file__:
-                    raise ImportError()
-            except ImportError:
-                raise BundleNotFoundError(module_name)
-
-        # Bundle's name
+        # Bundle's names
+        self._module_name = module_name
         self._name = kwargs.get('name', getattr(module, 'BUNDLE_NAME', module_name))
 
         # Bundle's root dir path
@@ -84,10 +80,6 @@ class Bundle:
             pref = f'/{basename(self._static_dir)}/{self._name}'
             self._static_url_prefix = kwargs.get('static_url_prefix', getattr(module, 'BUNDLE_STATIC_URL_PREFIX', pref))
 
-        # Bundle name must ne unique
-        if self._name in app.bundles:
-            raise BundleAlreadyRegisteredError(f"Bundle '{self._name}' is already registered")
-
         # Create the blueprint
         self._bp = Blueprint(self._name, module_name, self._static_dir, self._static_url_prefix, self._tpl_dir,
                              self._url_prefix, self._subdomain, self._url_defaults, root_dir)
@@ -99,17 +91,6 @@ class Bundle:
         if self._locale_dir:
             bindtextdomain(self._name, self._locale_dir)
 
-        # Initialize bundle's parts
-        for sub_module_name in ('views', 'commands'):
-            try:
-                with app.app_context() as ctx:
-                    ctx.g.bundle = self  # Make current bundle accessible in the currently imported module
-                    import_module(f'{module_name}.{sub_module_name}')
-            except ModuleNotFoundError:
-                pass
-
-        app.register_blueprint(self._bp)
-
     @property
     def module(self) -> ModuleType:
         """Bundle's module
@@ -117,18 +98,16 @@ class Bundle:
         return self._module
 
     @property
-    def app(self):
-        """Application instance
-
-        :type: ampho.Application
-        """
-        return self._app
-
-    @property
     def blueprint(self) -> Blueprint:
         """Bundle's `blueprint <https://flask.palletsprojects.com/en/master/api/#flask.Blueprint>`_.
         """
         return self._bp
+
+    @property
+    def module_name(self) -> str:
+        """Bundle module's name
+        """
+        return self._module_name
 
     @property
     def name(self) -> str:
@@ -220,7 +199,22 @@ class Bundle:
 
         return render_template(tpl, **args)
 
-    def init(self):
+    def load(self, app):
         """Init bundle
         """
-        hasattr(self._module, 'init') and callable(self._module.init) and self._module.init(self)
+        # Initialize bundle's parts
+        for sub_module_name in ('views', 'commands'):
+            try:
+                with app.app_context() as ctx:
+                    ctx.g.bundle = self  # Make current bundle accessible in the currently imported module
+                    import_module(f'{self._module_name}.{sub_module_name}')
+            except ModuleNotFoundError:
+                pass
+
+        # Register bundle's blueprint
+        app.register_blueprint(self._bp)
+
+        # Call bundle's initialization function
+        hasattr(self._module, 'on_load') and callable(self._module.on_load) and self._module.on_load(self)
+
+        return self

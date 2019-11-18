@@ -9,7 +9,7 @@ from copy import copy
 from os import getenv, getcwd
 from os.path import join as path_join, isfile
 from flask import Flask
-from .error import BundleNotFoundError
+from .error import BundleNotRegisteredError, BundleAlreadyRegisteredError
 from ._bundle import Bundle
 
 
@@ -18,10 +18,10 @@ class Application(Flask):
     act as a central registry for the view functions, the URL rules and much more. For more information please read
     `Flask documentation <https://flask.palletsprojects.com/en/master/api/#application-object>`_
 
-    :param bundles: names of bundle modules which should be registered at application start.
+    :param bundle_names: names of bundle modules which should be registered at application start.
     """
 
-    def __init__(self, bundles: List[str] = None, **kwargs):
+    def __init__(self, bundle_names: List[str] = None, **kwargs):
         """Init
         """
         # Registered bundles
@@ -51,22 +51,13 @@ class Application(Flask):
                 self.config.from_json(config_path)
 
         # Builtin bundles
-        bundles.extend(['ampho.locale'])
+        bundle_names.extend(['ampho.locale'])
 
         # Merge bundles list from configuration
-        bundles.extend(self.config.get('BUNDLES', []))
-
-        # Register bundles
-        if bundles:
-            for bundle_name in bundles:
-                self.register_bundle(bundle_name)
-
-        # Initialize bundles
-        for bundle in self.bundles.values():
-            bundle.init()
+        bundle_names.extend(self.config.get('BUNDLES', []))
 
         # Let derived class to perform setup
-        self.on_init()
+        self.on_init(bundle_names)
 
     @property
     def bundles(self) -> Dict[str, Bundle]:
@@ -74,35 +65,42 @@ class Application(Flask):
         """
         return copy(self._bundles)
 
-    def on_init(self):
+    def on_init(self, bundle_names: List[str]):
         """This method should be used to perform necessary application setup instead of overriding __init__().
         """
-        pass
+        with self.app_context():
+            # Register bundles
+            for module_name in bundle_names:
+                self.register_bundle(Bundle(module_name))
 
-    def register_bundle(self, module_name: str) -> Bundle:
-        """Register a bundle
-
-        :param module_name: bundle's module name.
-        """
-        bundle = Bundle(self, module_name)
-        self._bundles[bundle.name] = bundle
-
-        return bundle
-
-    def load_bundle(self, module_name: str) -> Bundle:
-        """Register and initialize a bundle
-
-        :param module_name: bundle's module name.
-        """
-        bundle = self.register_bundle(module_name)
-        bundle.init()
-
-        return bundle
+            # Initialize bundles
+            for bundle_name in self._bundles:
+                self.load_bundle(bundle_name)
 
     def get_bundle(self, name: str) -> Bundle:
         """Get a bundle object
         """
         if name not in self._bundles:
-            raise BundleNotFoundError(name)
+            raise BundleNotRegisteredError(name)
 
         return self._bundles[name]
+
+    def register_bundle(self, bundle: Bundle) -> Bundle:
+        """Register a bundle
+
+        :param module_name: bundle's module name.
+        """
+        # Bundle name must ne unique
+        if bundle.name in self._bundles:
+            raise BundleAlreadyRegisteredError(bundle.name)
+
+        self._bundles[bundle.name] = bundle
+
+        return bundle
+
+    def load_bundle(self, bundle_name: str) -> Bundle:
+        """Initialize a bundle
+
+        :param bundle_name: bundle's name
+        """
+        return self.get_bundle(bundle_name).load(self)

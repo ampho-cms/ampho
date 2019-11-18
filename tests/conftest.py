@@ -11,7 +11,7 @@ import string
 import random
 import json
 import ampho
-from typing import Tuple, Callable
+from typing import Callable
 
 
 def rand_str() -> str:
@@ -29,18 +29,22 @@ def create_package(pkg_dir_path, content: str = ''):
 
 
 @pytest.fixture
-def random_bundle(tmp_path: str) -> Callable:
-    def f() -> Tuple[str, str]:
-        pkg_name = rand_str()
-        view_name = rand_str()
+def rand_bundle(tmp_path: str) -> Callable:
+    # Add tmp_path to search path to allow import modules from there
+    if tmp_path not in sys.path:
+        sys.path.append(str(tmp_path))
 
+    def f() -> ampho.Bundle:
+        pkg_name = rand_str()
         pkg_path = os.path.join(tmp_path, pkg_name)
+
         create_package(pkg_path, (
             'def init(bundle):\n'
             '    pass'
         ))
 
-        # Create bundle view module and function
+        # Create view module
+        view_name = rand_str()
         with open(os.path.join(pkg_path, 'views.py'), 'wt') as f:
             f.write(
                 'from ampho import g\n'
@@ -50,20 +54,32 @@ def random_bundle(tmp_path: str) -> Callable:
                 '    return name\n'
             )
 
-        return pkg_name, view_name
+        # Create commands module
+        command_name = rand_str()
+        with open(os.path.join(pkg_path, 'commands.py'), 'wt') as f:
+            f.write(
+                'from ampho import g\n'
+                'bundle = g.bundle\n'
+                '@bundle.command("/<name>")\n'
+                f'def {command_name}(name):\n'
+                '    return name\n'
+            )
+
+        # Create static directory
+        static_d_path = os.path.join(pkg_path, 'static')
+        os.makedirs(static_d_path, 0o750)
+
+        return ampho.Bundle(pkg_name)
 
     return f
 
 
 @pytest.fixture
-def app(tmp_path: str, random_bundle: Callable):
+def app(tmp_path: str, rand_bundle):
     """Application fixture
     """
-    # Add tmp_path to search path
-    sys.path.append(str(tmp_path))
-
     # Create app's bundle
-    app_pkg_name, app_view_name = random_bundle()
+    app_bundle = rand_bundle()
 
     # Create instance dir
     instance_dir = os.path.join(tmp_path, 'instance')
@@ -76,7 +92,7 @@ def app(tmp_path: str, random_bundle: Callable):
         json.dump(config, f)
 
     # Create application instance
-    app = ampho.Application([f'{app_pkg_name}'], root_path=tmp_path)
+    app = ampho.Application([f'{app_bundle.name}'], root_path=tmp_path)
 
     # Check if the config was loaded
     assert app.config.get(list(config.keys())[0]) == list(config.values())[0]
