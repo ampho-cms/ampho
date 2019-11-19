@@ -5,10 +5,9 @@ __email__ = 'a@shepetko.com'
 __license__ = 'MIT'
 
 from os import environ
-from flask.cli import cli
+from flask.cli import FlaskGroup
 
 
 def main():
     environ['FLASK_APP'] = 'ampho._flask_app:app'
-    cli.help = ''
-    cli.main(prog_name='ampho')
+    FlaskGroup().main(prog_name='ampho')

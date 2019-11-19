@@ -11,7 +11,7 @@ from importlib import import_module
 from os.path import isdir, join as path_join, dirname, basename
 from flask import Blueprint, render_template
 from flask.cli import AppGroup
-from .error import BundleImportError
+from .error import BundleImportError, BundleNotLoadedError, BundleAlreadyLoadedError
 
 
 class Bundle:
@@ -46,10 +46,11 @@ class Bundle:
         """
         try:
             self._module = module = import_module(module_name)
-            if not module.__file__:
-                raise ImportError()
         except ImportError:
             raise BundleImportError(module_name)
+
+        # Bundle's bound application
+        self._app = None
 
         # Bundle's names
         self._module_name = module_name
@@ -195,13 +196,23 @@ class Bundle:
     def render_tpl(self, tpl: str, **args) -> str:
         """Render a template
         """
-        args['_'] = self.gettext
+        if not self._app:
+            raise BundleNotLoadedError(self._name)
 
-        return render_template(tpl, **args)
+        with self._app.app_context():
+            args['_'] = self.gettext
+            return render_template(tpl, **args)
 
     def load(self, app):
         """Init bundle
         """
+        # Check if the bundle is already loaded
+        if self._app:
+            raise BundleAlreadyLoadedError(self._name)
+
+        # Store link to the application which registered this bundle
+        self._app = app
+
         # Initialize bundle's parts
         for sub_module_name in ('views', 'commands'):
             try:

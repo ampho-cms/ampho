@@ -41,3 +41,19 @@ class BundleAlreadyRegisteredError(BundleError):
 
     def __str__(self) -> str:
         return f"Bundle '{self._name}' is already registered"
+
+
+class BundleNotLoadedError(BundleError):
+    """Bundle is not loaded
+    """
+
+    def __str__(self) -> str:
+        return f"Bundle '{self._name}' is not loaded"
+
+
+class BundleAlreadyLoadedError(BundleError):
+    """Bundle is not loaded
+    """
+
+    def __str__(self) -> str:
+        return f"Bundle '{self._name}' is already loaded"
