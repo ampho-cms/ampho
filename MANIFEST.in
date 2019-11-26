@@ -1,3 +1,2 @@
-include CHANGELOG.rst
-include LICENSE.rst
-include README.rst
+global-include *.rst
+global-include src *.ini
