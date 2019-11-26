@@ -23,8 +23,7 @@ class TestApplication:
         with pytest.raises(BundleAlreadyRegisteredError):
             app.register_bundle(bundle)
 
-    def test_bundle_load(self, app: Application, rand_bundle: Callable[[], Bundle],
-                         rand_str: Callable[[], str]):
+    def test_bundle_load(self, app: Application, rand_bundle: Callable[[], Bundle], rand_str: Callable[[], str]):
         bundle = rand_bundle()
 
         assert bundle == app.register_bundle(bundle)

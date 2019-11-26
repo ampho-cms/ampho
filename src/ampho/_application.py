@@ -24,6 +24,8 @@ class Application(Flask):
     def __init__(self, bundle_names: List[str] = None, **kwargs):
         """Init
         """
+        bundle_names = bundle_names or []
+
         # Registered bundles
         self._bundles = {}
 
@@ -74,7 +76,7 @@ class Application(Flask):
                 self.register_bundle(Bundle(module_name))
 
             # Initialize bundles
-            for bundle_name in self._bundles:
+            for bundle_name in bundle_names:
                 self.load_bundle(bundle_name)
 
     def get_bundle(self, name: str) -> Bundle:
@@ -87,14 +89,13 @@ class Application(Flask):
 
     def register_bundle(self, bundle: Bundle) -> Bundle:
         """Register a bundle
-
-        :param module_name: bundle's module name.
         """
         # Bundle name must ne unique
-        if bundle.name in self._bundles:
-            raise BundleAlreadyRegisteredError(bundle.name)
+        if bundle.module_name in self._bundles:
+            raise BundleAlreadyRegisteredError(bundle.module_name)
 
-        self._bundles[bundle.name] = bundle
+        # Register bundle by module name
+        self._bundles[bundle.module_name] = bundle
 
         return bundle
 

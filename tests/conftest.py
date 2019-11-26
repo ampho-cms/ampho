@@ -19,8 +19,8 @@ def rand_str() -> Callable[[], str]:
     """Generates random string
     """
 
-    def f() -> str:
-        return ''.join(random.choice(string.ascii_lowercase) for _ in range(8))
+    def f(n_chars: int = 8) -> str:
+        return ''.join(random.choice(string.ascii_lowercase) for _ in range(n_chars))
 
     return f
 
@@ -114,6 +114,7 @@ def app(tmp_path: str, rand_bundle: Callable[[], Bundle], rand_str: Callable[[],
 
     # Create application instance
     app = Application([f'{app_bundle.name}'], root_path=tmp_path)
+    app.testing = True
 
     # Check if the config was loaded
     assert app.config.get(list(config.keys())[0]) == list(config.values())[0]

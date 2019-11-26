@@ -7,3 +7,7 @@ exclude_lines =
     if settings.DEBUG
     raise AssertionError
     raise NotImplementedError
+
+omit =
+    src/ampho/__main__.py
+    src/ampho/_cli.py

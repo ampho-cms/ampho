@@ -4,6 +4,7 @@ __author__ = 'Oleksandr Shepetko'
 __email__ = 'a@shepetko.com'
 __license__ = 'MIT'
 
+import sys
 from gettext import bindtextdomain, dgettext
 from typing import Optional
 from types import ModuleType
@@ -44,6 +45,12 @@ class Bundle:
     def __init__(self, module_name: str, **kwargs):
         """Init
         """
+        # Because bundle may be re-imported multiple times (for example during testing),
+        # it is important not to use Python's module cache and perform actual imports each time
+        if module_name in sys.modules:
+            del sys.modules[module_name]
+
+        # Import bundle's module
         try:
             self._module = module = import_module(module_name)
         except ImportError:
@@ -93,6 +100,12 @@ class Bundle:
             bindtextdomain(self._name, self._locale_dir)
 
     @property
+    def module_name(self) -> str:
+        """Bundle module's name
+        """
+        return self._module_name
+
+    @property
     def module(self) -> ModuleType:
         """Bundle's module
         """
@@ -103,12 +116,6 @@ class Bundle:
         """Bundle's `blueprint <https://flask.palletsprojects.com/en/master/api/#flask.Blueprint>`_.
         """
         return self._bp
-
-    @property
-    def module_name(self) -> str:
-        """Bundle module's name
-        """
-        return self._module_name
 
     @property
     def name(self) -> str:
@@ -216,9 +223,15 @@ class Bundle:
         # Initialize bundle's parts
         for sub_module_name in ('views', 'commands'):
             try:
+                # Because bundle may be re-imported multiple times (for example during testing),
+                # it is important not to use Python's module cache and perform actual imports each time
+                sub_module_abs_name = f'{self._module_name}.{sub_module_name}'
+                if sub_module_abs_name in sys.modules:
+                    del sys.modules[sub_module_abs_name]
+
                 with app.app_context() as ctx:
                     ctx.g.bundle = self  # Make current bundle accessible in the currently imported module
-                    import_module(f'{self._module_name}.{sub_module_name}')
+                    import_module(sub_module_abs_name)
             except ModuleNotFoundError:
                 pass
 

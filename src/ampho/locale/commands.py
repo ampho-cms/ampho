@@ -18,7 +18,7 @@ _bundle = g.bundle  # type: Bundle
 def extract_cmd(bundles: Tuple[str, ...]):
     """Extract messages to a POT file
     """
-    for b_name in bundles or _bundle.app.bundles:
+    for b_name in bundles or current_app.bundles:
         b = current_app.get_bundle(b_name)
         if not b.locale_dir:
             continue
@@ -45,7 +45,7 @@ def init_cmd(bundle: str, locale: str):
 def update_cmd(locale: str, bundles: Tuple[str, ...]):
     """Update an existing PO file
     """
-    for b_name in bundles or _bundle.app.bundles:
+    for b_name in bundles or current_app.bundles:
         b = current_app.get_bundle(b_name)
         if not b.locale_dir:
             continue
@@ -59,7 +59,7 @@ def update_cmd(locale: str, bundles: Tuple[str, ...]):
 def compile_cmd(bundles):
     """Compile translations
     """
-    for b_name in bundles or _bundle.app.bundles:
+    for b_name in bundles or current_app.bundles:
         b = current_app.get_bundle(b_name)
         if not b.locale_dir:
             continue

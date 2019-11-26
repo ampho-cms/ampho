@@ -9,7 +9,7 @@ import pytest
 from typing import Callable
 from types import ModuleType
 from flask import Blueprint
-from ampho import Application, Bundle
+from ampho import Bundle
 from ampho.error import BundleImportError
 
 
