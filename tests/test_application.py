@@ -17,6 +17,7 @@ class TestApplication:
 
         assert bundle == app.register_bundle(bundle)
         assert bundle == app.get_bundle(bundle.name)
+        assert bundle.name in app.bundles
         assert isinstance(app.bundles, dict)
 
         # Try to register the same bundle twice
@@ -34,10 +35,11 @@ class TestApplication:
 
         # Try to call methods that requires bundle to be loaded
         with pytest.raises(BundleNotLoadedError):
-            bundle.render_tpl(rand_str())
+            bundle.render(rand_str())
 
         # Load bundle
         assert bundle == app.load_bundle(bundle.name)
+        assert bundle.app == app
 
         # Try to load the same bundle twice
         with pytest.raises(BundleAlreadyLoadedError):
@@ -51,5 +53,12 @@ class TestApplication:
         assert bundle.gettext(r_str) == r_str
 
         # Random bundle has a template which contains a string.
-        # Both template name and that string equal to the bundle's name
-        assert bundle.render_tpl(bundle.name) == bundle.name
+        # Both template name and that string equal to the bundle's name.
+        # See `conftest.py` for details
+        assert bundle.render(bundle.name) == bundle.name
+
+    def test_request(self, app: Application, rand_str: Callable[[], str]):
+        client = app.test_client()
+        r_str = rand_str()
+
+        assert client.get(f'/{r_str}').data == r_str.encode()

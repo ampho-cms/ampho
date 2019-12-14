@@ -88,12 +88,11 @@ class Bundle:
             pref = f'/{basename(self._static_dir)}/{self._name}'
             self._static_url_prefix = kwargs.get('static_url_prefix', getattr(module, 'BUNDLE_STATIC_URL_PREFIX', pref))
 
-        # Create the blueprint
-        self._bp = Blueprint(self._name, module_name, self._static_dir, self._static_url_prefix, self._tpl_dir,
-                             self._url_prefix, self._subdomain, self._url_defaults, root_dir)
-
-        # CLI help string
-        self._bp.cli.help = kwargs.get('cli_help', getattr(module, 'BUNDLE_CLI_HELP', None))
+        # Create the Flask blueprint
+        # It is important to not pass `static_folder` and `static_url_path` args, because we do not want to register
+        # separate static routes for bundles.
+        self._bp = Blueprint(self._name, module_name, None, None, self._tpl_dir, self._url_prefix, self._subdomain,
+                             self._url_defaults, root_dir)
 
         # Bind gettext's domain
         if self._locale_dir:
@@ -110,6 +109,14 @@ class Bundle:
         """Bundle's module
         """
         return self._module
+
+    @property
+    def app(self):
+        """Get application object
+
+        :rtype: ampho.Application
+        """
+        return self._app
 
     @property
     def blueprint(self) -> Blueprint:
@@ -173,8 +180,7 @@ class Bundle:
 
     @property
     def route(self):
-        """Bundle's `@router() decorator <https://flask.palletsprojects.com/en/
-        master/quickstart/#routing>`_.
+        """Bundle's `@router() decorator <https://flask.palletsprojects.com/en/master/quickstart/#routing>`_.
         """
         return self._bp.route
 
@@ -200,14 +206,17 @@ class Bundle:
         """
         return dgettext(self._name, s)
 
-    def render_tpl(self, tpl: str, **args) -> str:
+    def render(self, tpl: str, **args) -> str:
         """Render a template
         """
         if not self._app:
             raise BundleNotLoadedError(self._name)
 
         with self._app.app_context():
-            args['_'] = self.gettext
+            args.update({
+                '_': self.gettext,
+                '_bundle': self,
+            })
             return render_template(tpl, **args)
 
     def load(self, app):
@@ -229,9 +238,19 @@ class Bundle:
                 if sub_module_abs_name in sys.modules:
                     del sys.modules[sub_module_abs_name]
 
+                # It is important not to cache 'ampho.bundle_ctx' module,
+                # because it must update references to `g.current_bundle` each time it being imported
+                if 'ampho.bundle_ctx' in sys.modules:
+                    del sys.modules['ampho.bundle_ctx']
+
+                # Import submodule within bundle context
                 with app.app_context() as ctx:
-                    ctx.g.bundle = self  # Make current bundle accessible in the currently imported module
-                    import_module(sub_module_abs_name)
+                    ctx.g.current_bundle = self  # Make current bundle accessible in the currently imported module
+                    module = import_module(sub_module_abs_name)
+
+                    if sub_module_name == 'commands' and hasattr(module, 'CLI_HELP'):
+                        self.cli.help = module.CLI_HELP
+
             except ModuleNotFoundError:
                 pass
 

@@ -7,13 +7,12 @@ __license__ = 'MIT'
 import click
 from typing import Tuple
 from os import path
-from ampho import Bundle, g, current_app
+from ampho import current_app
+from ampho.bundle_ctx import bundle, command
 from babel.messages.frontend import CommandLineInterface as BabelCLI
 
-_bundle = g.bundle  # type: Bundle
 
-
-@_bundle.command('extract')
+@command('extract')
 @click.argument('bundles', nargs=-1)
 def extract_cmd(bundles: Tuple[str, ...]):
     """Extract messages to a POT file
@@ -25,10 +24,10 @@ def extract_cmd(bundles: Tuple[str, ...]):
 
         out_f_path = path.join(b.locale_dir, f'{b_name}.pot')
         BabelCLI().run(['babel', 'extract', '--no-location', '--omit-header', '--sort-output',
-                        '-F', _bundle.res_path('babel.ini'), '-o', out_f_path, b.root_dir])
+                        '-F', bundle.res_path('babel.ini'), '-o', out_f_path, b.root_dir])
 
 
-@_bundle.command('init')
+@command('init')
 @click.argument('locale')
 @click.argument('bundle')
 def init_cmd(bundle: str, locale: str):
@@ -39,7 +38,7 @@ def init_cmd(bundle: str, locale: str):
     BabelCLI().run(['babel', 'init', '-D', bundle, '-l', locale, '-i', inp_f_path, '-d', b.locale_dir])
 
 
-@_bundle.command('update')
+@command('update')
 @click.argument('locale')
 @click.argument('bundles', nargs=-1)
 def update_cmd(locale: str, bundles: Tuple[str, ...]):
@@ -54,7 +53,7 @@ def update_cmd(locale: str, bundles: Tuple[str, ...]):
         BabelCLI().run(['babel', 'update', '-D', b.name, '-l', locale, '-i', inp_f_path, '-d', b.locale_dir])
 
 
-@_bundle.command('compile')
+@command('compile')
 @click.argument('bundles', nargs=-1)
 def compile_cmd(bundles):
     """Compile translations

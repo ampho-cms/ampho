@@ -8,7 +8,8 @@ from typing import List, Dict
 from copy import copy
 from os import getenv, getcwd
 from os.path import join as path_join, isfile
-from flask import Flask
+from flask import Flask, Response
+from htmlmin import minify
 from .error import BundleNotRegisteredError, BundleAlreadyRegisteredError
 from ._bundle import Bundle
 
@@ -61,41 +62,54 @@ class Application(Flask):
         # Let derived class to perform setup
         self.on_init(bundle_names)
 
+        # Minify output in production mode
+        if not self.debug:
+            self.after_request_funcs.setdefault(None, []).append(self._minify_output)
+
+    @staticmethod
+    def _minify_output(response: Response):
+        """Minify output
+        """
+        if response.content_type.startswith('text/html'):
+            response.set_data(minify(response.get_data(as_text=True)))
+
+        return response
+
     @property
     def bundles(self) -> Dict[str, Bundle]:
-        """Registered bundles
+        """Get registered bundles by module name
         """
         return copy(self._bundles)
 
-    def on_init(self, bundle_names: List[str]):
+    def on_init(self, module_names: List[str]):
         """This method should be used to perform necessary application setup instead of overriding __init__().
         """
         with self.app_context():
             # Register bundles
-            for module_name in bundle_names:
+            for module_name in module_names:
                 self.register_bundle(Bundle(module_name))
 
             # Initialize bundles
-            for bundle_name in bundle_names:
+            for bundle_name in self._bundles:
                 self.load_bundle(bundle_name)
 
     def get_bundle(self, name: str) -> Bundle:
         """Get a bundle object
         """
-        if name not in self._bundles:
-            raise BundleNotRegisteredError(name)
+        if name in self._bundles:
+            return self._bundles[name]
 
-        return self._bundles[name]
+        raise BundleNotRegisteredError(name)
 
     def register_bundle(self, bundle: Bundle) -> Bundle:
         """Register a bundle
         """
         # Bundle name must ne unique
-        if bundle.module_name in self._bundles:
-            raise BundleAlreadyRegisteredError(bundle.module_name)
+        if bundle.name in self._bundles:
+            raise BundleAlreadyRegisteredError(bundle.name)
 
-        # Register bundle by module name
-        self._bundles[bundle.module_name] = bundle
+        # Register bundle
+        self._bundles[bundle.name] = bundle
 
         return bundle
 

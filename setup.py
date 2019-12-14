@@ -62,6 +62,7 @@ setup(
     python_requires='>=3.6',
     install_requires=[
         'flask==1.*',
+        'htmlmin==0.*',
         'babel==2.*',
     ],
     entry_points={

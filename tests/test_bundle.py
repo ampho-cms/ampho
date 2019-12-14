@@ -27,7 +27,7 @@ class TestBundle:
         assert isinstance(bundle.blueprint, Blueprint) == True
 
         # Base properties
-        assert bundle.name == bundle.module_name
+        assert bundle.name != bundle.module_name
         assert bundle.cli == bundle.blueprint.cli
         assert bundle.command == bundle.blueprint.cli.command
 
@@ -39,10 +39,10 @@ class TestBundle:
 
         # Directories paths
         assert bundle.root_dir == bundle.blueprint.root_path
-        assert bundle.static_dir == bundle.blueprint.static_folder
         assert bundle.tpl_dir == bundle.blueprint.template_folder
         assert bundle.res_dir == path_join(bundle.root_dir, 'res')
         assert bundle.locale_dir == path_join(bundle.root_dir, 'locale')
+        assert bundle.static_dir == path_join(bundle.root_dir, 'static')
 
         # Paths generators
         assert bundle.res_path(r_str) == path_join(bundle.res_dir, r_str)

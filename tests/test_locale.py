@@ -11,6 +11,7 @@ from ampho import Application
 class TestLocale:
     def test_locale(self, app: Application):
         runner = app.test_cli_runner()
+
         result = runner.invoke(args=['locale', 'extract'])
         assert result.exit_code == 0
 
