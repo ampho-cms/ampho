@@ -6,7 +6,7 @@ __license__ = 'MIT'
 
 import sys
 from gettext import bindtextdomain, dgettext
-from typing import Optional
+from typing import Optional, Tuple
 from types import ModuleType
 from importlib import import_module
 from os.path import isdir, join as path_join, dirname, basename
@@ -42,7 +42,7 @@ class Bundle:
         ``BUNDLE_URL_DEFAULTS`` module's property will be used.
     """
 
-    def __init__(self, module_name: str, **kwargs):
+    def __init__(self, app, module_name: str, **kwargs):
         """Init
         """
         # Because bundle may be re-imported multiple times (for example during testing),
@@ -57,11 +57,16 @@ class Bundle:
             raise BundleImportError(module_name)
 
         # Bundle's bound application
-        self._app = None
+        self._app = app
 
         # Bundle's names
         self._module_name = module_name
         self._name = kwargs.get('name', getattr(module, 'BUNDLE_NAME', module_name))
+
+        # Bundle dependencies
+        self._requires = tuple(kwargs.get('requires', getattr(module, 'BUNDLE_REQUIRES', ())))
+        for required_bundle in self._requires:
+            self._app.register_bundle(required_bundle)
 
         # Bundle's root dir path
         self._root_dir = root_dir = dirname(module.__file__)
@@ -109,6 +114,11 @@ class Bundle:
         """Bundle's module
         """
         return self._module
+
+    def requires(self) -> Tuple[str, ...]:
+        """Bundle's requirements
+        """
+        return self._requires
 
     @property
     def app(self):
@@ -219,15 +229,12 @@ class Bundle:
             })
             return render_template(tpl, **args)
 
-    def load(self, app):
+    def load(self):
         """Init bundle
         """
-        # Check if the bundle is already loaded
-        if self._app:
-            raise BundleAlreadyLoadedError(self._name)
-
-        # Store link to the application which registered this bundle
-        self._app = app
+        # Load dependencies
+        for module_name in self._requires:
+            self._app.load_bundle(module_name)
 
         # Initialize bundle's parts
         for sub_module_name in ('views', 'commands'):
@@ -244,7 +251,7 @@ class Bundle:
                     del sys.modules['ampho.bundle_ctx']
 
                 # Import submodule within bundle context
-                with app.app_context() as ctx:
+                with self._app.app_context() as ctx:
                     ctx.g.current_bundle = self  # Make current bundle accessible in the currently imported module
                     module = import_module(sub_module_abs_name)
 
@@ -255,9 +262,9 @@ class Bundle:
                 pass
 
         # Register bundle's blueprint
-        app.register_blueprint(self._bp)
+        self._app.register_blueprint(self._bp)
 
         # Call bundle's initialization function
-        hasattr(self._module, 'on_load') and callable(self._module.on_load) and self._module.on_load(self)
+        hasattr(self._module, '_on_load') and callable(self._module._on_load) and self._module._on_load()
 
         return self

@@ -14,3 +14,4 @@ route = g.current_bundle.route
 command = g.current_bundle.command
 render = g.current_bundle.render
 gettext = g.current_bundle.gettext
+_ = gettext

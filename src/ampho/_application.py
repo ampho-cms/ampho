@@ -87,35 +87,35 @@ class Application(Flask):
         with self.app_context():
             # Register bundles
             for module_name in module_names:
-                self.register_bundle(Bundle(module_name))
+                self.register_bundle(module_name)
 
             # Initialize bundles
-            for bundle_name in self._bundles:
-                self.load_bundle(bundle_name)
+            for module_name in module_names:
+                self.load_bundle(module_name)
 
-    def get_bundle(self, name: str) -> Bundle:
+    def get_bundle(self, module_name: str) -> Bundle:
         """Get a bundle object
         """
-        if name in self._bundles:
-            return self._bundles[name]
+        if module_name in self._bundles:
+            return self._bundles[module_name]
 
-        raise BundleNotRegisteredError(name)
+        raise BundleNotRegisteredError(module_name)
 
-    def register_bundle(self, bundle: Bundle) -> Bundle:
+    def register_bundle(self, module_name: str) -> Bundle:
         """Register a bundle
         """
         # Bundle name must ne unique
-        if bundle.name in self._bundles:
-            raise BundleAlreadyRegisteredError(bundle.name)
+        if module_name in self._bundles:
+            raise BundleAlreadyRegisteredError(module_name)
 
         # Register bundle
-        self._bundles[bundle.name] = bundle
+        self._bundles[module_name] = Bundle(self, module_name)
 
-        return bundle
+        return self._bundles[module_name]
 
-    def load_bundle(self, bundle_name: str) -> Bundle:
+    def load_bundle(self, module_name: str) -> Bundle:
         """Initialize a bundle
 
-        :param bundle_name: bundle's name
+        :param module_name: bundle's name
         """
-        return self.get_bundle(bundle_name).load(self)
+        return self.get_bundle(module_name).load()
