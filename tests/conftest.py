@@ -39,10 +39,9 @@ def rand_bundle(tmp_path: str, rand_str: Callable[[], str]) -> Callable:
     if tmp_path not in sys.path:
         sys.path.append(str(tmp_path))
 
-    def f() -> Bundle:
-        pkg_name = rand_str()
+    def f() -> str:
         bundle_name = rand_str()
-        pkg_path = os.path.join(tmp_path, pkg_name)
+        pkg_path = os.path.join(tmp_path, bundle_name)
 
         create_package(pkg_path, (
             f'BUNDLE_NAME = "{bundle_name}"\n'
@@ -91,7 +90,7 @@ def rand_bundle(tmp_path: str, rand_str: Callable[[], str]) -> Callable:
         with open(os.path.join(tpl_d_path, bundle_name), 'wt') as f:
             f.write(bundle_name)
 
-        return Bundle(pkg_name)
+        return bundle_name
 
     return f
 
@@ -101,7 +100,7 @@ def app(tmp_path: str, rand_bundle: Callable[[], Bundle], rand_str: Callable[[],
     """Application fixture
     """
     # Create app's bundle
-    app_bundle = rand_bundle()
+    app_bundle_mod_name = rand_bundle()
 
     # Create instance dir
     instance_dir = os.path.join(tmp_path, 'instance')
@@ -114,7 +113,7 @@ def app(tmp_path: str, rand_bundle: Callable[[], Bundle], rand_str: Callable[[],
         json.dump(config, f)
 
     # Create application instance
-    app = Application([f'{app_bundle.module_name}'], root_path=tmp_path)
+    app = Application([f'{app_bundle_mod_name}'], root_path=tmp_path)
     app.testing = True
 
     # Check if the config was loaded

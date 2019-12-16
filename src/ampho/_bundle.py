@@ -26,10 +26,7 @@ class Bundle:
     startup.
 
     :param app: an :class:`Application` instance.
-    :param module_name: a Python module name.
-    :param name: the name of the bundle. Will be prepended to each endpoint name. If it's not specified the
-        ``BUNDLE_NAME`` module's property will be used. If it's not specified, value of the :attr:`module_name` argument
-        will be used.
+    :param name: a Python module name.
     :param static_dir: path to a folder with static files relative to the bundle's root. If it's not specified the
         ``BUNDLE_STATIC_DIR`` module's property will be used. If it's not specified ``static`` will be used.
     :param tpl_dir: path to a folder with templates relative to the bundle's root. If it's not specified the
@@ -42,26 +39,28 @@ class Bundle:
         ``BUNDLE_URL_DEFAULTS`` module's property will be used.
     """
 
-    def __init__(self, app, module_name: str, **kwargs):
+    def __init__(self, app, name: str, **kwargs):
         """Init
         """
         # Because bundle may be re-imported multiple times (for example during testing),
         # it is important not to use Python's module cache and perform actual imports each time
-        if module_name in sys.modules:
-            del sys.modules[module_name]
+        if name in sys.modules:
+            del sys.modules[name]
 
         # Import bundle's module
         try:
-            self._module = module = import_module(module_name)
+            self._module = module = import_module(name)
         except ImportError:
-            raise BundleImportError(module_name)
+            raise BundleImportError(name)
 
         # Bundle's bound application
         self._app = app
 
         # Bundle's names
-        self._module_name = module_name
-        self._name = kwargs.get('name', getattr(module, 'BUNDLE_NAME', module_name))
+        self._name = name
+
+        # Bundle's load state
+        self._is_loaded = False
 
         # Bundle dependencies
         self._requires = tuple(kwargs.get('requires', getattr(module, 'BUNDLE_REQUIRES', ())))
@@ -96,7 +95,7 @@ class Bundle:
         # Create the Flask blueprint
         # It is important to not pass `static_folder` and `static_url_path` args, because we do not want to register
         # separate static routes for bundles.
-        self._bp = Blueprint(self._name, module_name, None, None, self._tpl_dir, self._url_prefix, self._subdomain,
+        self._bp = Blueprint(self._name, name, None, None, self._tpl_dir, self._url_prefix, self._subdomain,
                              self._url_defaults, root_dir)
 
         # Bind gettext's domain
@@ -104,10 +103,10 @@ class Bundle:
             bindtextdomain(self._name, self._locale_dir)
 
     @property
-    def module_name(self) -> str:
-        """Bundle module's name
+    def name(self) -> str:
+        """Bundle's name
         """
-        return self._module_name
+        return self._name
 
     @property
     def module(self) -> ModuleType:
@@ -115,10 +114,17 @@ class Bundle:
         """
         return self._module
 
+    @property
     def requires(self) -> Tuple[str, ...]:
         """Bundle's requirements
         """
         return self._requires
+
+    @property
+    def is_loaded(self) -> bool:
+        """Whether bundle is loaded
+        """
+        return self._is_loaded
 
     @property
     def app(self):
@@ -133,12 +139,6 @@ class Bundle:
         """Bundle's `blueprint <https://flask.palletsprojects.com/en/master/api/#flask.Blueprint>`_.
         """
         return self._bp
-
-    @property
-    def name(self) -> str:
-        """Bundle's name
-        """
-        return self._name
 
     @property
     def root_dir(self) -> str:
@@ -219,7 +219,7 @@ class Bundle:
     def render(self, tpl: str, **args) -> str:
         """Render a template
         """
-        if not self._app:
+        if not self._is_loaded:
             raise BundleNotLoadedError(self._name)
 
         with self._app.app_context():
@@ -232,18 +232,24 @@ class Bundle:
     def load(self):
         """Init bundle
         """
+        reg_options = {}
+
+        # Check if the bundle is not already loaded
+        if self._is_loaded:
+            raise BundleAlreadyLoadedError(self._name)
+
         # Load dependencies
-        for module_name in self._requires:
-            self._app.load_bundle(module_name)
+        for name in self._requires:
+            self._app.load_bundle(name, True)
 
         # Initialize bundle's parts
-        for sub_module_name in ('views', 'commands'):
+        for sub_name in ('views', 'commands'):
             try:
                 # Because bundle may be re-imported multiple times (for example during testing),
                 # it is important not to use Python's module cache and perform actual imports each time
-                sub_module_abs_name = f'{self._module_name}.{sub_module_name}'
-                if sub_module_abs_name in sys.modules:
-                    del sys.modules[sub_module_abs_name]
+                sub_abs_name = f'{self._name}.{sub_name}'
+                if sub_abs_name in sys.modules:
+                    del sys.modules[sub_abs_name]
 
                 # It is important not to cache 'ampho.bundle_ctx' module,
                 # because it must update references to `g.current_bundle` each time it being imported
@@ -253,18 +259,25 @@ class Bundle:
                 # Import submodule within bundle context
                 with self._app.app_context() as ctx:
                     ctx.g.current_bundle = self  # Make current bundle accessible in the currently imported module
-                    module = import_module(sub_module_abs_name)
+                    module = import_module(sub_abs_name)
 
-                    if sub_module_name == 'commands' and hasattr(module, 'CLI_HELP'):
-                        self.cli.help = module.CLI_HELP
+                    if sub_name == 'commands':
+                        if hasattr(module, 'CLI_GROUP'):
+                            reg_options['cli_group'] = module.CLI_GROUP
+                        if hasattr(module, 'CLI_HELP'):
+                            self.cli.help = module.CLI_HELP
+
 
             except ModuleNotFoundError:
                 pass
 
         # Register bundle's blueprint
-        self._app.register_blueprint(self._bp)
+        self._app.register_blueprint(self._bp, **reg_options)
 
         # Call bundle's initialization function
         hasattr(self._module, '_on_load') and callable(self._module._on_load) and self._module._on_load()
+
+        # Update loaded state
+        self._is_loaded = True
 
         return self

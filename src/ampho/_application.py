@@ -81,41 +81,44 @@ class Application(Flask):
         """
         return copy(self._bundles)
 
-    def on_init(self, module_names: List[str]):
+    def on_init(self, bundle_names: List[str]):
         """This method should be used to perform necessary application setup instead of overriding __init__().
         """
         with self.app_context():
             # Register bundles
-            for module_name in module_names:
-                self.register_bundle(module_name)
+            for name in bundle_names:
+                self.register_bundle(name)
 
             # Initialize bundles
-            for module_name in module_names:
-                self.load_bundle(module_name)
+            for name in bundle_names:
+                self.load_bundle(name)
 
-    def get_bundle(self, module_name: str) -> Bundle:
+    def get_bundle(self, name: str) -> Bundle:
         """Get a bundle object
         """
-        if module_name in self._bundles:
-            return self._bundles[module_name]
+        if name in self._bundles:
+            return self._bundles[name]
 
-        raise BundleNotRegisteredError(module_name)
+        raise BundleNotRegisteredError(name)
 
-    def register_bundle(self, module_name: str) -> Bundle:
+    def register_bundle(self, name: str) -> Bundle:
         """Register a bundle
         """
         # Bundle name must ne unique
-        if module_name in self._bundles:
-            raise BundleAlreadyRegisteredError(module_name)
+        if name in self._bundles:
+            raise BundleAlreadyRegisteredError(name)
 
         # Register bundle
-        self._bundles[module_name] = Bundle(self, module_name)
+        self._bundles[name] = Bundle(self, name)
 
-        return self._bundles[module_name]
+        return self._bundles[name]
 
-    def load_bundle(self, module_name: str) -> Bundle:
-        """Initialize a bundle
-
-        :param module_name: bundle's name
+    def load_bundle(self, name: str, skip_loaded: bool = False) -> Bundle:
+        """Load a bundle
         """
-        return self.get_bundle(module_name).load()
+        bundle = self.get_bundle(name)
+
+        if bundle.is_loaded and skip_loaded:
+            return bundle
+
+        return bundle.load()

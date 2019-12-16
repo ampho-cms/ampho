@@ -8,8 +8,11 @@ import click
 from typing import Tuple
 from os import path
 from ampho import current_app
-from ampho.bundle_ctx import bundle, command
+from ampho.bundle_ctx import command, _
 from babel.messages.frontend import CommandLineInterface as BabelCLI
+
+CLI_GROUP = 'locale'
+CLI_HELP = _('Localization management')
 
 
 @command('extract')
@@ -17,6 +20,7 @@ from babel.messages.frontend import CommandLineInterface as BabelCLI
 def extract_cmd(bundles: Tuple[str, ...]):
     """Extract messages to a POT file
     """
+    babel_ini_path = current_app.get_bundle('ampho.locale').res_path('babel.ini')
     for b_name in bundles or current_app.bundles:
         b = current_app.get_bundle(b_name)
         if not b.locale_dir:
@@ -24,7 +28,7 @@ def extract_cmd(bundles: Tuple[str, ...]):
 
         out_f_path = path.join(b.locale_dir, f'{b_name}.pot')
         BabelCLI().run(['babel', 'extract', '--no-location', '--omit-header', '--sort-output',
-                        '-F', bundle.res_path('babel.ini'), '-o', out_f_path, b.root_dir])
+                        '-F', babel_ini_path, '-o', out_f_path, b.root_dir])
 
 
 @command('init')

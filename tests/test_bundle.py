@@ -9,25 +9,25 @@ import pytest
 from typing import Callable
 from types import ModuleType
 from flask import Blueprint
-from ampho import Bundle
+from ampho import Application, Bundle
 from ampho.error import BundleImportError
 
 
 class TestBundle:
-    def test_bundle_object(self, rand_bundle: Callable[[], Bundle], rand_str: Callable[[], str]):
+    def test_bundle_object(self, app: Application, rand_bundle: Callable[[], str], rand_str: Callable[[], str]):
         r_str = rand_str()
-        bundle = rand_bundle()
+        bundle_mod_name = rand_bundle()
+        bundle = Bundle(app, bundle_mod_name)
 
         # Create bundle using non-existing module
         with pytest.raises(BundleImportError):
-            Bundle(rand_str())
+            Bundle(app, rand_str())
 
         # Typing
         assert isinstance(bundle.module, ModuleType)
-        assert isinstance(bundle.blueprint, Blueprint) == True
+        assert isinstance(bundle.blueprint, Blueprint) is True
 
         # Base properties
-        assert bundle.name != bundle.module_name
         assert bundle.cli == bundle.blueprint.cli
         assert bundle.command == bundle.blueprint.cli.command
 
