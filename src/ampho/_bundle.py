@@ -16,16 +16,11 @@ from .error import BundleImportError, BundleNotLoadedError, BundleAlreadyLoadedE
 
 
 class Bundle:
-    """Bundle is a simple abstraction over the `Flask's blueprint concept <https://flask.palletsprojects.com/en/master/
-    blueprints/>`_. Primary aim of using bundles is to automate blueprints setup routines by providing useful defaults
-    and extra helpers that make it easier to accomplish common tasks. You don't need to instantiate blueprint objects
-    manually, just create regular Python module/package contains couple of predefined names and/or folders and bundle
-    will do all the work for you.
+    """TODO: write description
 
     Usually you don't need to use this class directly. Bundle instances are created by :class:`Application` during its
     startup.
 
-    :param app: an :class:`Application` instance.
     :param name: a Python module name.
     :param static_dir: path to a folder with static files relative to the bundle's root. If it's not specified the
         ``BUNDLE_STATIC_DIR`` module's property will be used. If it's not specified ``static`` will be used.
@@ -39,7 +34,7 @@ class Bundle:
         ``BUNDLE_URL_DEFAULTS`` module's property will be used.
     """
 
-    def __init__(self, app, name: str, **kwargs):
+    def __init__(self, name: str, **kwargs):
         """Init
         """
         # Because bundle may be re-imported multiple times (for example during testing),
@@ -53,19 +48,17 @@ class Bundle:
         except ImportError:
             raise BundleImportError(name)
 
-        # Bundle's bound application
-        self._app = app
-
-        # Bundle's names
+        # Bundle's name
         self._name = name
-
-        # Bundle's load state
-        self._is_loaded = False
 
         # Bundle dependencies
         self._requires = tuple(kwargs.get('requires', getattr(module, 'BUNDLE_REQUIRES', ())))
-        for required_bundle in self._requires:
-            self._app.register_bundle(required_bundle)
+
+        # Bundle's bound application
+        self._app = None
+
+        # Bundle's blueprint
+        self._bp = None  # type: Optional[Blueprint]
 
         # Bundle's root dir path
         self._root_dir = root_dir = dirname(module.__file__)
@@ -92,12 +85,6 @@ class Bundle:
             pref = f'/{basename(self._static_dir)}/{self._name}'
             self._static_url_prefix = kwargs.get('static_url_prefix', getattr(module, 'BUNDLE_STATIC_URL_PREFIX', pref))
 
-        # Create the Flask blueprint
-        # It is important to not pass `static_folder` and `static_url_path` args, because we do not want to register
-        # separate static routes for bundles.
-        self._bp = Blueprint(self._name, name, None, None, self._tpl_dir, self._url_prefix, self._subdomain,
-                             self._url_defaults, root_dir)
-
         # Bind gettext's domain
         if self._locale_dir:
             bindtextdomain(self._name, self._locale_dir)
@@ -121,18 +108,18 @@ class Bundle:
         return self._requires
 
     @property
-    def is_loaded(self) -> bool:
-        """Whether bundle is loaded
-        """
-        return self._is_loaded
-
-    @property
     def app(self):
         """Get application object
 
         :rtype: ampho.Application
         """
         return self._app
+
+    @property
+    def is_loaded(self) -> bool:
+        """Whether bundle is loaded
+        """
+        return self._app is not None
 
     @property
     def blueprint(self) -> Blueprint:
@@ -219,7 +206,7 @@ class Bundle:
     def render(self, tpl: str, **args) -> str:
         """Render a template
         """
-        if not self._is_loaded:
+        if not self._app:
             raise BundleNotLoadedError(self._name)
 
         with self._app.app_context():
@@ -229,18 +216,28 @@ class Bundle:
             })
             return render_template(tpl, **args)
 
-    def load(self):
+    def register(self):
+        """Register the bundle
+        """
+        return self
+
+    def load(self, app):
         """Init bundle
         """
         reg_options = {}
 
         # Check if the bundle is not already loaded
-        if self._is_loaded:
+        if self._app:
             raise BundleAlreadyLoadedError(self._name)
 
-        # Load dependencies
-        for name in self._requires:
-            self._app.load_bundle(name, True)
+        # Link to the application
+        self._app = app
+
+        # Create the Flask blueprint
+        # It is important to NOT pass `static_folder` and `static_url_path` args, because we do not want to register
+        # separate static routes for bundles.
+        self._bp = Blueprint(self._name, self._name, None, None, self._tpl_dir, self._url_prefix, self._subdomain,
+                             self._url_defaults, self._root_dir)
 
         # Initialize bundle's parts
         for sub_name in ('views', 'commands'):
@@ -265,8 +262,7 @@ class Bundle:
                         if hasattr(module, 'CLI_GROUP'):
                             reg_options['cli_group'] = module.CLI_GROUP
                         if hasattr(module, 'CLI_HELP'):
-                            self.cli.help = module.CLI_HELP
-
+                            self._bp.cli.help = module.CLI_HELP
 
             except ModuleNotFoundError:
                 pass
@@ -275,9 +271,6 @@ class Bundle:
         self._app.register_blueprint(self._bp, **reg_options)
 
         # Call bundle's initialization function
-        hasattr(self._module, '_on_load') and callable(self._module._on_load) and self._module._on_load()
-
-        # Update loaded state
-        self._is_loaded = True
+        hasattr(self._module, 'on_load') and callable(self._module.on_load) and self._module.on_load()
 
         return self

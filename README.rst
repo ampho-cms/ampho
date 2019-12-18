@@ -1,7 +1,7 @@
 Ampho
 =====
 
-**Ampho** is a core part of the `Ampho CMS <https://ampho-cms.github.io>`_.
+**Ampho** is the core part of the `Ampho CMS`_.
 
 
 Build status
@@ -68,6 +68,7 @@ License
 
 This project is licensed under the MIT License. See the `LICENSE.rst`_ file for details.
 
+.. _Ampho CMS: https://ampho.xyz
 .. _Flask: https://palletsprojects.com/p/flask/
 .. _Read the Docs: https://ampho.readthedocs.io
 .. _virtual environment: https://docs.python.org/3/tutorial/venv.html

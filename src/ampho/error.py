@@ -16,6 +16,8 @@ class BundleError(AmphoError):
     """
 
     def __init__(self, name: str):
+        """Init
+        """
         self._name = name
 
 
@@ -57,3 +59,19 @@ class BundleAlreadyLoadedError(BundleError):
 
     def __str__(self) -> str:
         return f"Bundle '{self._name}' is already loaded"
+
+
+class BundleCircularDependencyError(BundleError):
+    """Circular dependency detected while loading a bundle
+    """
+    def __init__(self, name: str, loading_stack: list):
+        """Init
+        """
+        super().__init__(name)
+
+        self._stack = loading_stack
+
+    def __str__(self) -> str:
+        return f"Bundle '{self._name}' is already being loaded. " \
+               "Check your setup against circular dependencies. " \
+                f"Loading stack content: {self._stack}"

@@ -10,7 +10,7 @@ from os import getenv, getcwd
 from os.path import join as path_join, isfile
 from flask import Flask, Response
 from htmlmin import minify
-from .error import BundleNotRegisteredError, BundleAlreadyRegisteredError
+from .error import BundleNotRegisteredError, BundleAlreadyRegisteredError, BundleCircularDependencyError
 from ._bundle import Bundle
 
 
@@ -25,10 +25,11 @@ class Application(Flask):
     def __init__(self, bundle_names: List[str] = None, **kwargs):
         """Init
         """
-        bundle_names = bundle_names or []
-
         # Registered bundles
         self._bundles = {}
+
+        # Bundles are being loaded
+        self._loading_bundles = []
 
         # Application's root dir
         kwargs.setdefault('root_path', getcwd())
@@ -53,10 +54,9 @@ class Application(Flask):
             if isfile(config_path):
                 self.config.from_json(config_path)
 
-        # Builtin bundles
+        # Build list bundles to load
+        bundle_names = bundle_names or []
         bundle_names.extend(['ampho.locale'])
-
-        # Merge bundles list from configuration
         bundle_names.extend(self.config.get('BUNDLES', []))
 
         # Let derived class to perform setup
@@ -87,11 +87,11 @@ class Application(Flask):
         with self.app_context():
             # Register bundles
             for name in bundle_names:
-                self.register_bundle(name)
+                self.register_bundle(name, True)
 
             # Initialize bundles
             for name in bundle_names:
-                self.load_bundle(name)
+                self.load_bundle(name, True)
 
     def get_bundle(self, name: str) -> Bundle:
         """Get a bundle object
@@ -101,24 +101,50 @@ class Application(Flask):
 
         raise BundleNotRegisteredError(name)
 
-    def register_bundle(self, name: str) -> Bundle:
+    def register_bundle(self, name: str, skip_registered: bool = False) -> Bundle:
         """Register a bundle
         """
-        # Bundle name must ne unique
+        # Bundle must not be registered more than once
         if name in self._bundles:
+            if skip_registered:
+                return self._bundles[name]
+
             raise BundleAlreadyRegisteredError(name)
 
-        # Register bundle
-        self._bundles[name] = Bundle(self, name)
+        # Instantiate bundle object
+        bundle = self._bundles[name] = Bundle(name)
 
-        return self._bundles[name]
+        # Register dependencies
+        for req in bundle.requires:
+            self.register_bundle(req, skip_registered)
+
+        # Register bundle
+        return bundle.register()
 
     def load_bundle(self, name: str, skip_loaded: bool = False) -> Bundle:
         """Load a bundle
         """
+        if name in self._loading_bundles:
+            raise BundleCircularDependencyError(name, self._loading_bundles)
+
         bundle = self.get_bundle(name)
 
+        # Bundles must not be loaded more than once
         if bundle.is_loaded and skip_loaded:
             return bundle
 
-        return bundle.load()
+        # Mark bundle as being loaded to prevent circular dependencies
+        self._loading_bundles.append(name)
+
+        try:
+            # Load dependencies
+            for req_name in bundle.requires:
+                self.load_bundle(req_name, skip_loaded)
+
+            # Load the bundle
+            bundle.load(self)
+
+        finally:
+            self._loading_bundles.pop()
+
+        return bundle

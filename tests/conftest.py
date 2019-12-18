@@ -10,7 +10,8 @@ import os
 import string
 import random
 import json
-from ampho import Application, Bundle
+from typing import Optional, List
+from ampho import Application
 from typing import Callable
 
 
@@ -39,12 +40,13 @@ def rand_bundle(tmp_path: str, rand_str: Callable[[], str]) -> Callable:
     if tmp_path not in sys.path:
         sys.path.append(str(tmp_path))
 
-    def f() -> str:
-        bundle_name = rand_str()
-        pkg_path = os.path.join(tmp_path, bundle_name)
+    def f(requires: List[str] = None, name: str = None) -> str:
+        name = name or rand_str()
+        pkg_path = os.path.join(tmp_path, name)
+        requires_str = ', '.join([f'"{b_name}"' for b_name in requires or []])
 
         create_package(pkg_path, (
-            f'BUNDLE_NAME = "{bundle_name}"\n'
+            f'BUNDLE_REQUIRES = [{requires_str}]\n'
             'def init(bundle):\n'
             '    pass'
         ))
@@ -87,20 +89,21 @@ def rand_bundle(tmp_path: str, rand_str: Callable[[], str]) -> Callable:
         os.makedirs(res_d_path, 0o750)
 
         # Create template
-        with open(os.path.join(tpl_d_path, bundle_name), 'wt') as f:
-            f.write(bundle_name)
+        with open(os.path.join(tpl_d_path, name), 'wt') as f:
+            f.write(name)
 
-        return bundle_name
+        return name
 
     return f
 
 
 @pytest.fixture
-def app(tmp_path: str, rand_bundle: Callable[[], Bundle], rand_str: Callable[[], str]):
+def app(tmp_path: str, rand_bundle: Callable[[Optional[list]], str], rand_str: Callable[[], str]):
     """Application fixture
     """
-    # Create app's bundle
-    app_bundle_mod_name = rand_bundle()
+    # Create bundles
+    bundle_name_1 = rand_bundle([])
+    bundle_name_2 = rand_bundle([bundle_name_1])
 
     # Create instance dir
     instance_dir = os.path.join(tmp_path, 'instance')
@@ -113,7 +116,7 @@ def app(tmp_path: str, rand_bundle: Callable[[], Bundle], rand_str: Callable[[],
         json.dump(config, f)
 
     # Create application instance
-    app = Application([f'{app_bundle_mod_name}'], root_path=tmp_path)
+    app = Application([bundle_name_2], root_path=tmp_path)
     app.testing = True
 
     # Check if the config was loaded

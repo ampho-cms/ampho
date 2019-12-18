@@ -25,24 +25,30 @@ class TestApplication:
             app.register_bundle(bundle_mod_name)
 
     def test_bundle_load(self, app: Application, rand_bundle: Callable[[], str], rand_str: Callable[[], str]):
-        bundle_mod_name = rand_bundle()
-        bundle = app.register_bundle(bundle_mod_name)
+        # Create and register a bundle
+        bundle_name = rand_bundle()
+        bundle = app.register_bundle(bundle_name)
 
         # Try to load non-registered bundle
         with pytest.raises(BundleNotRegisteredError):
             app.load_bundle(rand_str())
 
-        # Try to call methods that requires bundle to be loaded
+        # Try to call methods that require bundle to be loaded
         with pytest.raises(BundleNotLoadedError):
             bundle.render(rand_str())
 
         # Load bundle
-        assert bundle == app.load_bundle(bundle_mod_name)
-        assert bundle.app == app
+        assert bundle.is_loaded is False
+        assert app.load_bundle(bundle_name) is bundle
+        assert bundle.app is app
+        assert bundle.is_loaded is True
 
         # Try to load the same bundle twice
         with pytest.raises(BundleAlreadyLoadedError):
-            app.load_bundle(bundle_mod_name)
+            app.load_bundle(bundle_name)
+
+        # Load the same bundle, but without exception
+        assert app.load_bundle(bundle_name, True) is bundle
 
     def test_bundle_methods(self, app: Application, rand_bundle: Callable[[], str],
                             rand_str: Callable[[], str]):

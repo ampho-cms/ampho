@@ -10,6 +10,7 @@ from os import path
 from ampho import current_app
 from ampho.bundle_ctx import command, _
 from babel.messages.frontend import CommandLineInterface as BabelCLI
+from .error import BundleDoesntSupportLocalizationError
 
 CLI_GROUP = 'locale'
 CLI_HELP = _('Localization management')
@@ -38,6 +39,10 @@ def init_cmd(bundle: str, locale: str):
     """Init a new PO file
     """
     b = current_app.get_bundle(bundle)
+
+    if not b.locale_dir:
+        raise BundleDoesntSupportLocalizationError(bundle)
+
     inp_f_path = path.join(b.locale_dir, f'{b.name}.pot')
     BabelCLI().run(['babel', 'init', '-D', bundle, '-l', locale, '-i', inp_f_path, '-d', b.locale_dir])
 

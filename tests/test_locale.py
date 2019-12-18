@@ -4,8 +4,8 @@ __author__ = 'Oleksandr Shepetko'
 __email__ = 'a@shepetko.com'
 __license__ = 'MIT'
 
-from typing import Callable
 from ampho import Application
+from ampho.locale.error import BundleDoesntSupportLocalizationError
 
 
 class TestLocale:
@@ -15,8 +15,10 @@ class TestLocale:
         result = runner.invoke(args=['locale', 'extract'])
         assert result.exit_code == 0
 
-        result = runner.invoke(args=['locale', 'init', 'en', list(app.bundles.keys())[0]])
-        assert result.exit_code == 0
+        for b_name in app.bundles:
+            result = runner.invoke(args=['locale', 'init', 'en', b_name])
+            if not isinstance(result.exception, BundleDoesntSupportLocalizationError):
+                assert result.exit_code == 0
 
         result = runner.invoke(args=['locale', 'update', 'en'])
         assert result.exit_code == 0
