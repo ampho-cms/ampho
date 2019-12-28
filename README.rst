@@ -23,6 +23,7 @@ Requirements
 ------------
 
 - `Flask`_ 1.x
+- `Blinker`_ 1.x
 
 
 Installation
@@ -70,6 +71,7 @@ This project is licensed under the MIT License. See the `LICENSE.rst`_ file for 
 
 .. _Ampho CMS: https://ampho.xyz
 .. _Flask: https://palletsprojects.com/p/flask/
+.. _Blinker: https://pythonhosted.org/blinker/
 .. _Read the Docs: https://ampho.readthedocs.io
 .. _virtual environment: https://docs.python.org/3/tutorial/venv.html
 .. _tox: https://pypi.org/project/tox

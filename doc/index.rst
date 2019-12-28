@@ -6,9 +6,9 @@ increase overall developer's productivity of developing web applications. Also *
 `Ampho CMS`_.
 
 .. toctree::
-    quick-start
-    api/index
+    application
+    bundle
 
 
 .. _Flask: https://palletsprojects.com/p/flask/
-.. _Ampho CMS: https://ampho-cms.github.io
+.. _Ampho CMS: https://ampho.xyz

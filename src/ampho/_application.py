@@ -6,12 +6,13 @@ __license__ = 'MIT'
 
 from typing import List, Dict
 from copy import copy
-from os import getenv, getcwd
+from os import environ, getenv, getcwd
 from os.path import join as path_join, isfile
 from flask import Flask, Response
 from htmlmin import minify
 from .error import BundleNotRegisteredError, BundleAlreadyRegisteredError, BundleCircularDependencyError
 from ._bundle import Bundle
+from .signals import bundle_registered
 
 
 class Application(Flask):
@@ -27,6 +28,7 @@ class Application(Flask):
         """
         # Registered bundles
         self._bundles = {}
+        self._bundles_by_path = {}
 
         # Bundles are being loaded
         self._loading_bundles = []
@@ -43,21 +45,26 @@ class Application(Flask):
         if 'static_folder' not in kwargs:
             kwargs['static_folder'] = path_join(root_path, 'static')
 
+        # Enable Flask debug mode
+        environ.setdefault('FLASK_DEBUG', getenv('AMPHO_DEBUG', '0'))
+
+        # Set Flask environment name
+        default_env = 'development' if getenv('FLASK_DEBUG') == '1' else 'production'
+        environ.setdefault('FLASK_ENV', getenv('AMPHO_ENV', default_env))
+
         # Call Flask's constructor
         kwargs.setdefault('instance_relative_config', True)
         super().__init__(__name__, **kwargs)
 
         # Load configuration
-        config_names = ['default', getenv('FLASK_ENV', 'production')]
+        config_names = ['default', getenv('AMPHO_ENV', 'production')]
         for config_name in config_names:
             config_path = path_join(self.instance_path, config_name) + '.json'
             if isfile(config_path):
                 self.config.from_json(config_path)
 
-        # Build list bundles to load
-        bundle_names = bundle_names or []
-        bundle_names.extend(['ampho.locale'])
-        bundle_names.extend(self.config.get('BUNDLES', []))
+        # Bundles to load
+        bundle_names = (bundle_names or []) + self.config.get('BUNDLES', [])
 
         # Let derived class to perform setup
         self.on_init(bundle_names)
@@ -80,6 +87,12 @@ class Application(Flask):
         """Get registered bundles by module name
         """
         return copy(self._bundles)
+
+    @property
+    def bundles_by_path(self) -> Dict[str, Bundle]:
+        """Get registered bundles by path
+        """
+        return copy(self._bundles_by_path)
 
     def on_init(self, bundle_names: List[str]):
         """This method should be used to perform necessary application setup instead of overriding __init__().
@@ -112,14 +125,19 @@ class Application(Flask):
             raise BundleAlreadyRegisteredError(name)
 
         # Instantiate bundle object
-        bundle = self._bundles[name] = Bundle(name)
+        bundle = Bundle(name)
+        self._bundles[name] = bundle
+        self._bundles_by_path[bundle.root_dir] = bundle
 
         # Register dependencies
         for req in bundle.requires:
             self.register_bundle(req, skip_registered)
 
         # Register bundle
-        return bundle.register()
+        bundle.register()
+        bundle_registered.send(bundle)
+
+        return bundle
 
     def load_bundle(self, name: str, skip_loaded: bool = False) -> Bundle:
         """Load a bundle

@@ -4,8 +4,6 @@ __author__ = 'Oleksandr Shepetko'
 __email__ = 'a@shepetko.com'
 __license__ = 'MIT'
 
-import sys
-from gettext import bindtextdomain, dgettext
 from typing import Optional, Tuple
 from types import ModuleType
 from importlib import import_module
@@ -37,11 +35,6 @@ class Bundle:
     def __init__(self, name: str, **kwargs):
         """Init
         """
-        # Because bundle may be re-imported multiple times (for example during testing),
-        # it is important not to use Python's module cache and perform actual imports each time
-        if name in sys.modules:
-            del sys.modules[name]
-
         # Import bundle's module
         try:
             self._module = module = import_module(name)
@@ -64,8 +57,8 @@ class Bundle:
         self._root_dir = root_dir = dirname(module.__file__)
 
         # Bundle resource directories paths
-        self._locale_dir = self._res_dir = self._static_dir = self._tpl_dir = None  # type: Optional[str]
-        for d_name in ('locale', 'res', 'static', 'tpl'):
+        self._res_dir = self._static_dir = self._tpl_dir = None  # type: Optional[str]
+        for d_name in ('res', 'static', 'tpl'):
             kw_d_name = kwargs.get(d_name)
             d_path = path_join(root_dir, kw_d_name or getattr(module, f'BUNDLE_{d_name.upper()}_DIR', d_name))
             setattr(self, f'_{d_name}_dir', d_path if isdir(d_path) else None)
@@ -84,10 +77,6 @@ class Bundle:
         if self._static_dir:
             pref = f'/{basename(self._static_dir)}/{self._name}'
             self._static_url_prefix = kwargs.get('static_url_prefix', getattr(module, 'BUNDLE_STATIC_URL_PREFIX', pref))
-
-        # Bind gettext's domain
-        if self._locale_dir:
-            bindtextdomain(self._name, self._locale_dir)
 
     @property
     def name(self) -> str:
@@ -132,12 +121,6 @@ class Bundle:
         """Bundle's root path
         """
         return self._root_dir
-
-    @property
-    def locale_dir(self) -> Optional[str]:
-        """Bundle's locale dir location
-        """
-        return self._locale_dir
 
     @property
     def res_dir(self) -> Optional[str]:
@@ -198,11 +181,6 @@ class Bundle:
         """
         return path_join(self.res_dir, filename)
 
-    def gettext(self, s: str) -> str:
-        """Get translation of a string
-        """
-        return dgettext(self._name, s)
-
     def render(self, tpl: str, **args) -> str:
         """Render a template
         """
@@ -211,14 +189,17 @@ class Bundle:
 
         with self._app.app_context():
             args.update({
-                '_': self.gettext,
                 '_bundle': self,
             })
+
             return render_template(tpl, **args)
 
     def register(self):
         """Register the bundle
         """
+        # Call bundle's initialization function
+        hasattr(self._module, 'on_register') and callable(self._module.on_register) and self._module.on_register()
+
         return self
 
     def load(self, app):
@@ -242,19 +223,9 @@ class Bundle:
         # Initialize bundle's parts
         for sub_name in ('views', 'commands'):
             try:
-                # Because bundle may be re-imported multiple times (for example during testing),
-                # it is important not to use Python's module cache and perform actual imports each time
-                sub_abs_name = f'{self._name}.{sub_name}'
-                if sub_abs_name in sys.modules:
-                    del sys.modules[sub_abs_name]
-
-                # It is important not to cache 'ampho.bundle_ctx' module,
-                # because it must update references to `g.current_bundle` each time it being imported
-                if 'ampho.bundle_ctx' in sys.modules:
-                    del sys.modules['ampho.bundle_ctx']
-
                 # Import submodule within bundle context
                 with self._app.app_context() as ctx:
+                    sub_abs_name = f'{self._name}.{sub_name}'
                     ctx.g.current_bundle = self  # Make current bundle accessible in the currently imported module
                     module = import_module(sub_abs_name)
 
@@ -264,7 +235,7 @@ class Bundle:
                         if hasattr(module, 'CLI_HELP'):
                             self._bp.cli.help = module.CLI_HELP
 
-            except ModuleNotFoundError:
+            except ModuleNotFoundError:  # pragma: no cover
                 pass
 
         # Register bundle's blueprint

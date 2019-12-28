@@ -6,21 +6,23 @@ __license__ = 'MIT'
 
 from os.path import join as path_join
 import pytest
-from typing import Callable, List
 from types import ModuleType
 from flask import Blueprint
-from ampho import Application, Bundle
+from ampho import Bundle
+from ampho.testing import AmphoApplicationTestCase
 from ampho.error import BundleImportError, BundleAlreadyRegisteredError, BundleCircularDependencyError
 
 
-class TestBundle:
-    def test_bundle(self, app: Application, rand_bundle: Callable[[], str], rand_str: Callable[[], str]):
+class TestBundle(AmphoApplicationTestCase):
+    def test_bundle(self, tmp_path: str):
+        app = self.rand_app(tmp_path)
+
         # Create a bundle
-        b_name = rand_bundle()
+        b_name = self.rand_bundle(tmp_path)
 
         # Create bundle using non-existing module
         with pytest.raises(BundleImportError):
-            Bundle(rand_str())
+            Bundle(self.rand_str())
 
         # Register bundle
         bundle = app.register_bundle(b_name)
@@ -53,21 +55,20 @@ class TestBundle:
         assert bundle.root_dir == bundle.blueprint.root_path
         assert bundle.tpl_dir == bundle.blueprint.template_folder
         assert bundle.res_dir == path_join(bundle.root_dir, 'res')
-        assert bundle.locale_dir == path_join(bundle.root_dir, 'locale')
         assert bundle.static_dir == path_join(bundle.root_dir, 'static')
 
         # Paths generators
-        r_str = rand_str()
+        r_str = self.rand_str()
         assert bundle.res_path(r_str) == path_join(bundle.res_dir, r_str)
 
-    def test_bundle_circular_dependency(self, app: Application, rand_str: Callable[[], str],
-                                        rand_bundle: Callable[[List[str], str], str]):
-        b_name_1 = rand_str()
-        b_name_2 = rand_str()
+    def test_bundle_circular_dependency(self, tmp_path: str):
+        app = self.rand_app(tmp_path)
+        b_name_1 = self.rand_str()
+        b_name_2 = self.rand_str()
 
         # Create two bundles which depends on each other
-        rand_bundle([b_name_2], b_name_1)
-        rand_bundle([b_name_1], b_name_2)
+        self.rand_bundle(tmp_path, [b_name_2], b_name_1)
+        self.rand_bundle(tmp_path, [b_name_1], b_name_2)
 
         # Register first bundle, which will cause send bundle registration
         app.register_bundle(b_name_1, True)
@@ -79,3 +80,11 @@ class TestBundle:
         # Loading second bundle should cause error as well
         with pytest.raises(BundleCircularDependencyError):
             app.load_bundle(b_name_2)
+
+    def test_render(self, tmp_path: str):
+        """Test bundle's render method
+        """
+        app = self.rand_app(tmp_path)
+        bundle = list(app.bundles.values())[0]  # type: Bundle
+
+        bundle.render(bundle.name)

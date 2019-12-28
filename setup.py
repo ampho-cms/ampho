@@ -63,6 +63,7 @@ setup(
         'flask==1.*',
         'htmlmin==0.*',
         'babel==2.*',
+        'blinker==1.*',
     ],
     entry_points={
         'console_scripts': [
