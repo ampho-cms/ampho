@@ -184,13 +184,51 @@ For example, let's add another one view to demonstrate usage of Flask's variable
     def hello(name: str) -> str:
         """Greetings page
         """
-        return f'Hello {name}!'
+        return f'Hello, {name}!'
 
 
 URL Building
 ------------
 
-To do.
+To build an URL to a specific view function, use the ``url_for()`` function. It accepts the name of the view
+function prefixed with bundle name as its first argument and any number of keyword arguments, each corresponding to a
+variable part of the URL rule. Unknown variable parts are appended to the URL as query parameters:
+
+.. sourcecode:: python
+
+    from ampho import url_for
+
+    print(url_for('app.hello', name='Alice'))  # Will print '/hello/Alice'
+
+The same function can be used in `templates`_ as well:
+
+.. sourcecode:: html
+
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>Ampho Application</title>
+    </head>
+    <body>
+        <p>
+            <a href="{{ url_for('app.hello', name='Alice') }}">Say hello to Alice</a>
+        </p>
+    </body>
+    </html>
+
+To view all existing rule names, use the following CLI command:
+
+.. sourcecode:: text
+
+    (env) $ ampho routes
+
+.. sourcecode:: text
+
+    Endpoint   Methods  Rule
+    ---------  -------  -----------------------
+    app.hello  GET      /<name>
+    app.home   GET      /
 
 
 Redirects and Errors
