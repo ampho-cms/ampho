@@ -1,4 +1,4 @@
-"""Ampho Main Module
+"""Ampho Main
 """
 __author__ = 'Oleksandr Shepetko'
 __email__ = 'a@shepetko.com'

@@ -10,7 +10,7 @@ from types import ModuleType
 from flask import Blueprint
 from ampho import Bundle
 from ampho.testing import AmphoApplicationTestCase
-from ampho.error import BundleImportError, BundleAlreadyRegisteredError, BundleCircularDependencyError
+from ampho.errors import BundleImportError, BundleAlreadyRegisteredError, BundleCircularDependencyError
 
 
 class TestBundle(AmphoApplicationTestCase):

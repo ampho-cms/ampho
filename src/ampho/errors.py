@@ -22,7 +22,7 @@ class BundleError(AmphoError):
 
 
 class BundleImportError(BundleError):
-    """Error while
+    """Error while importing bundle module
     """
 
     def __str__(self) -> str:

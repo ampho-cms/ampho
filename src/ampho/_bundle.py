@@ -10,7 +10,7 @@ from importlib import import_module
 from os.path import isdir, join as path_join, dirname, basename
 from flask import Blueprint, render_template
 from flask.cli import AppGroup
-from .error import BundleImportError, BundleNotLoadedError, BundleAlreadyLoadedError
+from .errors import BundleImportError, BundleNotLoadedError, BundleAlreadyLoadedError
 
 
 class Bundle:

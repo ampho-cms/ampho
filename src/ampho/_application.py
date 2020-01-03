@@ -10,20 +10,25 @@ from os import environ, getenv, getcwd
 from os.path import join as path_join, isfile
 from flask import Flask, Response
 from htmlmin import minify
-from .error import BundleNotRegisteredError, BundleAlreadyRegisteredError, BundleCircularDependencyError
+from .errors import BundleNotRegisteredError, BundleAlreadyRegisteredError, BundleCircularDependencyError, \
+    BundleAlreadyLoadedError
 from ._bundle import Bundle
 from .signals import bundle_registered
 
 
 class Application(Flask):
-    """The application object implements a WSGI application and acts as the central object. Once it is created it will
-    act as a central registry for the view functions, the URL rules and much more. For more information please read
-    `Flask documentation <https://flask.palletsprojects.com/en/master/api/#application-object>`_
+    """The application object implements a WSGI application. Once it is created it will act as a central registry for
+    view functions, URL rules and all other application's stuff.
 
-    :param bundle_names: names of bundle modules which should be registered at application start.
+    :param List[str] bundles: names of bundle modules which should be registered and loaded at application start.
+    :param str root_path: path to the root directory of the application.
+    :param str instance_path: path to the instance directory of the application. Default is ``$root_path/instance``.
+    :param str static_folder: path to the directory contains static files. default is ``$root_path/static``.
+    :param bool instance_relative_config: is application configuration located relative to instance directory. Default
+           is ``True``.
     """
 
-    def __init__(self, bundle_names: List[str] = None, **kwargs):
+    def __init__(self, bundles: List[str] = None, **kwargs):
         """Init
         """
         # Registered bundles
@@ -64,18 +69,18 @@ class Application(Flask):
                 self.config.from_json(config_path)
 
         # Bundles to load
-        bundle_names = (bundle_names or []) + self.config.get('BUNDLES', [])
+        bundles = (bundles or []) + self.config.get('BUNDLES', [])
 
         # Let derived class to perform setup
-        self.on_init(bundle_names)
+        self.on_init(bundles)
 
         # Minify output in production mode
         if not self.debug:
-            self.after_request_funcs.setdefault(None, []).append(self._minify_output)
+            self.after_request_funcs.setdefault(None, []).append(self._minify)
 
     @staticmethod
-    def _minify_output(response: Response):
-        """Minify output
+    def _minify(response: Response) -> Response:
+        """Minify response
         """
         if response.content_type.startswith('text/html'):
             response.set_data(minify(response.get_data(as_text=True)))
@@ -85,29 +90,40 @@ class Application(Flask):
     @property
     def bundles(self) -> Dict[str, Bundle]:
         """Get registered bundles by module name
+
+        :rtype: Dict[str, Bundle]
         """
         return copy(self._bundles)
 
     @property
     def bundles_by_path(self) -> Dict[str, Bundle]:
         """Get registered bundles by path
+
+        :rtype: Dict[str, Bundle]
         """
         return copy(self._bundles_by_path)
 
-    def on_init(self, bundle_names: List[str]):
+    def on_init(self, bundles: List[str]):
         """This method should be used to perform necessary application setup instead of overriding __init__().
+
+        :param List[str] bundles: names of bundle modules which should be registered and loaded at application start.
         """
         with self.app_context():
             # Register bundles
-            for name in bundle_names:
+            for name in bundles:
                 self.register_bundle(name, True)
 
             # Initialize bundles
-            for name in bundle_names:
+            for name in bundles:
                 self.load_bundle(name, True)
 
     def get_bundle(self, name: str) -> Bundle:
-        """Get a bundle object
+        """Get a bundle by name
+
+        :param str name: bundle name.
+        :rtype: Bundle
+        :returns: A bundle instance.
+        :raises BundleNotRegisteredError: if the bundle is not registered.
         """
         if name in self._bundles:
             return self._bundles[name]
@@ -116,6 +132,11 @@ class Application(Flask):
 
     def register_bundle(self, name: str, skip_registered: bool = False) -> Bundle:
         """Register a bundle
+
+        :param str name: bundle name
+        :returns: Bundle's instance.
+        :rtype: Bundle
+        :raises BundleAlreadyRegisteredError: if a bundle with the same name is already registered.
         """
         # Bundle must not be registered more than once
         if name in self._bundles:
@@ -133,7 +154,7 @@ class Application(Flask):
         for req in bundle.requires:
             self.register_bundle(req, skip_registered)
 
-        # Register bundle
+        # Finish bundle registration
         bundle.register()
         bundle_registered.send(bundle)
 
@@ -141,15 +162,26 @@ class Application(Flask):
 
     def load_bundle(self, name: str, skip_loaded: bool = False) -> Bundle:
         """Load a bundle
+
+        :param str name: bundle name.
+        :param bool skip_loaded: don't raise :py:exc:`errors.BundleAlreadyLoadedError` in case if bundle with the same
+            name is already registered.
+        :returns: Bundle's instance.
+        :rtype: Bundle
+        :raises BundleCircularDependencyError: if a circular dependency was detected.
+        :raises BundleAlreadyLoadedError: if the bundle is already loaded.
         """
         if name in self._loading_bundles:
             raise BundleCircularDependencyError(name, self._loading_bundles)
 
+        # Get registered bundle instance
         bundle = self.get_bundle(name)
 
         # Bundles must not be loaded more than once
-        if bundle.is_loaded and skip_loaded:
-            return bundle
+        if bundle.is_loaded:
+            if skip_loaded:
+                return bundle
+            raise BundleAlreadyLoadedError(name)
 
         # Mark bundle as being loaded to prevent circular dependencies
         self._loading_bundles.append(name)

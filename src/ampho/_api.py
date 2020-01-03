@@ -1,4 +1,4 @@
-"""Various API helpers
+"""Ampho API Functions
 """
 __author__ = 'Oleksandr Shepetko'
 __email__ = 'a@shepetko.com'
@@ -45,7 +45,7 @@ def get_caller_bundle(skip_frames: int = 1) -> Bundle:
     raise RuntimeError('There is not bundle context set')  # pragma: no cover
 
 
-def route(rule, **options):
+def route(rule: str, **options):
     """Decorator for routes definition
     """
     return get_caller_bundle().route(rule, **options)

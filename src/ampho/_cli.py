@@ -1,4 +1,4 @@
-"""Ampho CLI
+"""Ampho CLI Main Module
 """
 __author__ = 'Oleksandr Shepetko'
 __email__ = 'a@shepetko.com'

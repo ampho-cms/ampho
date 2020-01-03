@@ -1,14 +1,16 @@
 Ampho
 =====
 
-**Ampho** is the small Python library built on the top of `Flask`_ micro framework. Primary goal of *Ampho* is to
-increase overall developer's productivity of developing web applications. Also **Ampho** is the core part of the
-`Ampho CMS`_.
+**Ampho** is the core part of `Ampho CMS`_. It is a small library built on the top of `Flask`_ micro framework.
+The primary goal of *Ampho* is to increase overall developer's productivity of developing web applications.
+
 
 .. toctree::
-    application
-    bundle
+    :maxdepth: 2
+
+    user_manual
+    api/index
 
 
-.. _Flask: https://palletsprojects.com/p/flask/
 .. _Ampho CMS: https://ampho.xyz
+.. _Flask: https://palletsprojects.com/p/flask/

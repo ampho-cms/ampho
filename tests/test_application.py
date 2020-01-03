@@ -6,7 +6,7 @@ __license__ = 'MIT'
 
 import pytest
 from ampho.testing import AmphoApplicationTestCase
-from ampho.error import BundleAlreadyRegisteredError, BundleNotRegisteredError, BundleAlreadyLoadedError, \
+from ampho.errors import BundleAlreadyRegisteredError, BundleNotRegisteredError, BundleAlreadyLoadedError, \
     BundleNotLoadedError
 
 
