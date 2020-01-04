@@ -8,6 +8,8 @@ from typing import List, Dict
 from copy import copy
 from os import environ, getenv, getcwd
 from os.path import join as path_join, isfile
+from socket import gethostname
+from getpass import getuser
 from flask import Flask, Response
 from htmlmin import minify
 from .errors import BundleNotRegisteredError, BundleAlreadyRegisteredError, BundleCircularDependencyError, \
@@ -50,19 +52,15 @@ class Application(Flask):
         if 'static_folder' not in kwargs:
             kwargs['static_folder'] = path_join(root_path, 'static')
 
-        # Enable Flask debug mode
-        environ.setdefault('FLASK_DEBUG', getenv('AMPHO_DEBUG', '0'))
-
         # Set Flask environment name
-        default_env = 'development' if getenv('FLASK_DEBUG') == '1' else 'production'
-        environ.setdefault('FLASK_ENV', getenv('AMPHO_ENV', default_env))
+        environ.setdefault('FLASK_ENV', 'development' if getenv('FLASK_DEBUG') == '1' else 'production')
 
         # Call Flask's constructor
         kwargs.setdefault('instance_relative_config', True)
         super().__init__(__name__, **kwargs)
 
         # Load configuration
-        config_names = ['default', getenv('AMPHO_ENV', 'production')]
+        config_names = ['default', getenv('FLASK_ENV'), f'{getuser()}@{gethostname()}']
         for config_name in config_names:
             config_path = path_join(self.instance_path, config_name) + '.json'
             if isfile(config_path):
