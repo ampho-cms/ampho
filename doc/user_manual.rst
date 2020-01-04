@@ -298,10 +298,34 @@ Cookies
 To do.
 
 
-Context Locals
---------------
+Application Context
+-------------------
 
-To do.
+Among many other things, *Ampho* uses `Flask's application context`_ concept and related objects and API functions. If
+you're not familiar with this idea, it's strongly recommended to spend some time and read about it.
+
+Using application context in *Ampho* is exactly the same as in Flask:
+
+.. sourcecode:: python
+
+    from ampho import current_app, g
+
+    def get_db():
+        """This function should be called to get the connection to the database
+        """
+        if 'db' not in g:
+            g.db = connect_to_database()
+
+        return g.db
+
+    @current_app.teardown_appcontext
+    def teardown_db():
+        """This function is being called after each request
+        """
+        db = g.pop('db', None)
+
+        if db is not None:
+            db.close()
 
 
 Logging
@@ -321,6 +345,7 @@ To do.
 .. _uWSGI: https://uwsgi-docs.readthedocs.io/
 .. _Flask: https://flask.palletsprojects.com
 .. _Flask's blueprints: https://flask.palletsprojects.com/en/master/blueprints/
-.. _Flask routing: https://flask.palletsprojects.com/en/1.1.x/quickstart/#routing
+.. _Flask routing: https://flask.palletsprojects.com/en/master/quickstart/#routing
 .. _URLs: https://en.wikipedia.org/wiki/URL
 .. _Jinja: https://jinja.palletsprojects.com
+.. _Flask's application context: https://flask.palletsprojects.com/en/master/appcontext/
