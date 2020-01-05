@@ -143,8 +143,37 @@ As you can notice, starting an Ampho application is almost the same as starting 
 ``flask`` CLI command, ``ampho`` should be used. This is only the difference between Ampho and Flask
 
 
-Configuring
------------
+Bundle initialization process
+-----------------------------
+
+When Ampho loads a bundle, it does this operation in two steps. At first, bundle is registered, and then it is loaded.
+If you need to perform actions during bundle registration, you should define ``on_register()`` hook function in the
+bundle module's ``__init__.py`` code and it'll be called automatically by Ampho. Similarly, you may define ``on_load()``
+function, if you need actions to be performed at bundle loading time.
+
+.. sourcecode:: python
+
+    def on_register():
+        print('Bundle is registered.')
+
+    def on_load():
+        print('Bundle is loaded.')
+
+
+Bundle requirements
+-------------------
+
+A bundle can depend on other bundles. In that case it is important, that required bundles be properly loaded and
+initialized before dependant bundle. To define requirements for your bundle, use ``BUNDLE_REQUIRES`` list or tuple of
+strings property in bundle's ``__init__.py``, i. e.:
+
+    .. sourcecode:: python
+
+    BUNDLE_REQUIRES = ('ampho_locale', 'ampho_db')
+
+
+Application configuration
+-------------------------
 
 Ampho application is configured in the same way as `Flask <https://flask.palletsprojects.com/en/master/config/>`_ ones.
 In addition to Flask' configuration mechanism, Ampho provides another one convenient way to handle and distribute
@@ -219,93 +248,21 @@ rules, different HTTP methods and so on.
 
 .. note::
 
-    Dont forget to use ``route()`` decorator from the ``ampho`` package instead of the ``flask`` one.
-
-
-Templates
----------
-
-Of course in real web application it is not convenient to render responses exactly in views` code. Usually it is
-necessary to render more or less big amounts of HTML code, and it is good practice to keep it separately. It is where
-**templates** are coming.
-
-Template is a separate file which can be loaded somewhere in the application and rendered using variable values where
-it's needed. Ampho uses powerful `Jinja`_ template engine by default.
-
-Let's modify our last view to make use the power of templating. First thing we should do is to create template file.
-By default any Ampho bundle expects templates to be stored in the separate directory named ``tpl`` within bundle's
-file structure. Let's create that directory and place our first template named ``home.html`` here.
-
-.. sourcecode:: text
-
-    /hello-world
-        /app
-            /__init__.py
-            /tpl
-                /home.html
-            /views.py
-        /env
-        /instance
-
-.. sourcecode:: html
-
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <title>Ampho Application</title>
-    </head>
-    <body>
-        <p>Hello, {{ name }}!</p>
-    </body>
-    </html>
-
-After that modify view's code to use rendered template instead of directly returned string:
-
-.. sourcecode:: python
-
-    from ampho import route, render
-
-    @route('/<name>')
-    def hello(name: str) -> str:
-        """Greetings page
-        """
-        return render('home.html', name=name)
-
-
-.. note::
-
-    Dont forget to use ``render()`` decorator from the ``ampho`` package instead of the ``flask`` one.
+    Dont forget to use ``route()`` decorator from the ``ampho`` package instead of the ``flask``'s one.
 
 
 Application Context
 -------------------
 
-Among many other things, Ampho uses `Flask's application context`_ concept and related objects and API functions. If
-you're not familiar with this idea, it's strongly recommended to spend some time and read about it.
-
-Using application context in Ampho is exactly the same as in Flask:
+When you use pure Flask, you create application object by yourself. But when you use Ampho, this object created by Ampho
+for you. To access this object use ``ampho.app`` attribute, i. e.:
 
 .. sourcecode:: python
 
-    from ampho import app, g
+    from ampho import app
+    from flask.logging import default_handler
 
-    def get_db():
-        """This function should be called to get the connection to the database
-        """
-        if 'db' not in g:
-            g.db = connect_to_database()
-
-        return g.db
-
-    @app.teardown_appcontext
-    def teardown_db():
-        """This function is being called after each request
-        """
-        db = g.pop('db', None)
-
-        if db is not None:
-            db.close()
+    app.logger.removeHandler(default_handler)
 
 
 Logging
@@ -329,3 +286,4 @@ To do.
 .. _URLs: https://en.wikipedia.org/wiki/URL
 .. _Jinja: https://jinja.palletsprojects.com
 .. _Flask's application context: https://flask.palletsprojects.com/en/master/appcontext/
+.. _flask.render_template() function: https://flask.palletsprojects.com/en/master/api/#flask.render_template
