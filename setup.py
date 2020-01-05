@@ -67,7 +67,7 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            'ampho = ampho._cli:main'
+            'ampho = ampho.cli:main'
         ]
     },
 )

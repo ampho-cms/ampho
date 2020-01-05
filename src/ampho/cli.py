@@ -12,5 +12,5 @@ app = Application([b for b in environ.get('AMPHO_BUNDLES', 'app').split(',') if 
 
 
 def main():
-    environ['FLASK_APP'] = 'ampho._cli:app'
+    environ['FLASK_APP'] = 'ampho.cli:app'
     FlaskGroup().main(prog_name='ampho')

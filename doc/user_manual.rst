@@ -95,7 +95,7 @@ The "app" bundle
 
 Bundle's name ``app`` is a little bit special. The thing is, when the Ampho application starts, it should know what
 bundles should be loaded. You can specify list of such bundles using environment variable or configuration parameter
-(more about that you can find below in this manual), but if you don't do this, Ampho will try to load at least one
+``BUNDLES``, but if you don't do this, Ampho will try to load at least one
 bundle named ``app``. So for simple setups you even don't have to specify application's "main" bundle, simply give the
 ``app`` name to it.
 
@@ -167,7 +167,7 @@ A bundle can depend on other bundles. In that case it is important, that require
 initialized before dependant bundle. To define requirements for your bundle, use ``BUNDLE_REQUIRES`` list or tuple of
 strings property in bundle's ``__init__.py``, i. e.:
 
-    .. sourcecode:: python
+.. sourcecode:: python
 
     BUNDLE_REQUIRES = ('ampho_locale', 'ampho_db')
 
@@ -210,8 +210,8 @@ configuration set automatically depending on environment where application runs.
 Routing
 -------
 
-In general it doesn't matter where exactly view is located in the application code, but Ampho proposes a convenient
-way to organize views' code and map it to URLs.
+In general it doesn't matter where exactly views code is located, but Ampho proposes a convenient way to organize
+views' and map it to URLs.
 
 When Ampho loads a bundle, it checks for the ``views`` module presence in the bundle's package, and, if it's
 present, Ampho automatically imports it within bundle's context, so you can easily use ``views`` module to define
@@ -250,6 +250,64 @@ rules, different HTTP methods and so on.
 
     Dont forget to use ``route()`` decorator from the ``ampho`` package instead of the ``flask``'s one.
 
+For all other aspects of working with routing, please refer to the `Flask routing guide`_.
+
+
+CLI commands
+------------
+
+In general it doesn't matter where exactly CLI commands code is located, but Ampho proposes a convenient to organize
+commands code by placing them into separate module named ``commands``.
+
+.. sourcecode:: text
+
+    /hello-world
+        /app
+            /__init__.py
+            /commands.py  <-- Here is the module with commands
+            /views.py
+        /env
+        /instance
+
+Once you have module named ``commands`` in a bundle, Ampho will import it automatically at bundle loading time, so
+everything you need to do is to place commands' functions into it, wrapping them with ``ampho.command()`` decorator.
+
+.. sourcecode:: python
+
+    from ampho import command
+    from click import echo
+
+    @command('hello')
+    def hello():
+        echo('Hello, world')
+
+
+That's all. Now, you can run your command from CLI:
+
+.. sourcecode:: text
+
+    (env) $ ampho app hello
+    Hello, world
+
+Notice, that ``hello`` command was automatically placed to the ``app`` group, which name is the name of the bundle where
+command was defined. If you need to change command group's name, it could be done via ``CLI_GROUP`` module-level
+property. Additionally, using the ``CLI_HELP`` property, you can set group's description shown when you run ``ampho``
+command without arguments.
+
+.. sourcecode:: python
+
+    from ampho import command
+    from click import echo
+
+    CLI_GROUP = 'my_app'
+    CLI_HELP = 'Set of extremely useful commands'
+
+    @command('hello')
+    def hello():
+        echo('Hello, world')
+
+For all other aspects of working with CLI commands, please refer to the `Flask CLI guide`_.
+
 
 Application Context
 -------------------
@@ -287,3 +345,5 @@ To do.
 .. _Jinja: https://jinja.palletsprojects.com
 .. _Flask's application context: https://flask.palletsprojects.com/en/master/appcontext/
 .. _flask.render_template() function: https://flask.palletsprojects.com/en/master/api/#flask.render_template
+.. _Flask routing guide: https://flask.palletsprojects.com/en/master/quickstart/#routing
+.. _Flask CLI guide: https://flask.palletsprojects.com/en/master/cli/
