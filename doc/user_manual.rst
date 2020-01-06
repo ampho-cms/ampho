@@ -175,7 +175,7 @@ strings property in bundle's ``__init__.py``, i. e.:
 Application configuration
 -------------------------
 
-Ampho application is configured in the same way as `Flask <https://flask.palletsprojects.com/en/master/config/>`_ ones.
+Ampho application is configured in the same way as `Flask ones <https://flask.palletsprojects.com/en/master/config/>`_.
 In addition to Flask' configuration mechanism, Ampho provides another one convenient way to handle and distribute
 application's configuration using JSON files with pre-defined names, located in the `instance directory`_.
 
@@ -253,6 +253,17 @@ rules, different HTTP methods and so on.
 For all other aspects of working with routing, please refer to the `Flask routing guide`_.
 
 
+Template rendering
+------------------
+
+Template rendering in Ampho works almost the same way as in Flask, except two moments:
+
+#. Template files should be located inside the ``tpl`` directory of the bundle.
+#. To render templates the ``ampho.render()`` function should be user instead if ``flask.render_template()``. The first
+   one has exactly same signature as the `flask.render_template()`_, but injects ``_bundle`` variable into each
+   template, which is current bundle object.
+
+
 CLI commands
 ------------
 
@@ -326,7 +337,18 @@ for you. To access this object use ``ampho.app`` attribute, i. e.:
 Logging
 -------
 
-To do.
+If ``FLASK_ENV`` configuration parameter is ``development`` or ``FLASK_DEBUG`` is ``1``, logging level automatically
+will be set to ``DEBUG``.
+
+Besides of `Flask logging`_ capabilities, Ampho additionally adds `TimedRotatingFileHandler`_ by default. This logger
+is configured to write one file per day into the ``${root_dir}/log`` by default and retains last 30 files.
+
+If you don't need this logger to be enabled, set ``LOG_FILES_ENABLED`` configuration parameter to ``0``.
+
+If it's necessary to change `log messages format`_ of this logger, you can do this via ``LOG_FILES_MSG_FORMAT``
+configuration parameter.
+
+Number of retained files is controlled via ``LOG_FILES_BACKUP_COUNT`` configuration parameter.
 
 
 Deploying to a Web Server
@@ -347,3 +369,7 @@ To do.
 .. _flask.render_template() function: https://flask.palletsprojects.com/en/master/api/#flask.render_template
 .. _Flask routing guide: https://flask.palletsprojects.com/en/master/quickstart/#routing
 .. _Flask CLI guide: https://flask.palletsprojects.com/en/master/cli/
+.. _Flask logging: https://flask.palletsprojects.com/en/master/logging/
+.. _TimedRotatingFileHandler: https://docs.python.org/3/library/logging.handlers.html#timedrotatingfilehandler
+.. _flask.render_template(): https://flask.palletsprojects.com/en/master/api/#flask.render_template
+.. _log messages format: https://docs.python.org/3/library/logging.html#logrecord-attributes

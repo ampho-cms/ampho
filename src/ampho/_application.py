@@ -4,12 +4,14 @@ __author__ = 'Oleksandr Shepetko'
 __email__ = 'a@shepetko.com'
 __license__ = 'MIT'
 
+import logging
 from typing import List, Dict
 from copy import copy
-from os import environ, getenv, getcwd
+from os import environ, getenv, getcwd, makedirs
 from os.path import join as path_join, isfile
 from socket import gethostname
 from getpass import getuser
+from logging.handlers import TimedRotatingFileHandler
 from flask import Flask, Response
 from htmlmin import minify
 from .errors import BundleNotRegisteredError, BundleAlreadyRegisteredError, BundleCircularDependencyError, \
@@ -53,11 +55,15 @@ class Application(Flask):
             kwargs['static_folder'] = path_join(root_path, 'static')
 
         # Set Flask environment name
-        environ.setdefault('FLASK_ENV', 'development' if getenv('FLASK_DEBUG') == '1' else 'production')
+        environ.setdefault('FLASK_ENV', 'production')
 
         # Call Flask's constructor
         kwargs.setdefault('instance_relative_config', True)
         super().__init__(__name__, **kwargs)
+
+        # Set logging level
+        if self.debug:
+            logging.getLogger().setLevel(logging.DEBUG)
 
         # Load configuration
         config_names = ['default', getenv('FLASK_ENV'), f'{getuser()}@{gethostname()}']
@@ -65,6 +71,17 @@ class Application(Flask):
             config_path = path_join(self.instance_path, config_name) + '.json'
             if isfile(config_path):
                 self.config.from_json(config_path)
+
+        # Initialize timed rotating file logger handler
+        if int(self.config.get('LOG_FILES_ENABLED', '1')):
+            makedirs(self.log_path, 0o755, True)
+            log_path = path_join(self.log_path, 'ampho.log')
+            default_fmt = '%(asctime)s] %(levelname)s: %(message)s'
+            log_format = self.config.get('LOG_FILES_MSG_FORMAT', default_fmt)
+            backup_count = int(self.config.get('LOG_FILES_BACKUP_COUNT', 30))
+            t_handler = TimedRotatingFileHandler(log_path, 'midnight', backupCount=backup_count)
+            t_handler.setFormatter(logging.Formatter(log_format))
+            logging.getLogger().addHandler(t_handler)
 
         # Bundles to load
         bundles = (bundles or []) + self.config.get('BUNDLES', [])
@@ -84,6 +101,12 @@ class Application(Flask):
             response.set_data(minify(response.get_data(as_text=True)))
 
         return response
+
+    @property
+    def log_path(self) -> str:
+        """Get log directory path
+        """
+        return path_join(self.root_path, self.config.get('LOG_FILES_PATH', 'log'))
 
     @property
     def bundles(self) -> Dict[str, Bundle]:
@@ -132,6 +155,7 @@ class Application(Flask):
         """Register a bundle
 
         :param str name: bundle name
+        :param bool skip_registered: should already registered name be silently skipped
         :returns: Bundle's instance.
         :rtype: Bundle
         :raises BundleAlreadyRegisteredError: if a bundle with the same name is already registered.
