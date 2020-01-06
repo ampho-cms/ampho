@@ -28,7 +28,7 @@ def get_caller_bundle(skip_frames: int = 1) -> Bundle:
 
     # Try to detect bundle by inspecting source code
     for of in _inspect.getouterframes(_inspect.currentframe())[skip_frames:]:
-        filename = of.filename
+        filename = path.abspath(of.filename)
 
         if filename in _FILE2BUNDLE:  # pragma: no cover
             return _FILE2BUNDLE[filename]

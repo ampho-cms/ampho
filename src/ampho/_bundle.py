@@ -7,7 +7,7 @@ __license__ = 'MIT'
 from typing import Optional, Tuple
 from types import ModuleType
 from importlib import import_module
-from os.path import isdir, join as path_join, dirname, basename
+from os.path import isdir, join as path_join, dirname, basename, abspath
 from flask import Blueprint, render_template
 from flask.cli import AppGroup
 from .errors import BundleImportError, BundleNotLoadedError, BundleAlreadyLoadedError
@@ -54,7 +54,7 @@ class Bundle:
         self._bp = None  # type: Optional[Blueprint]
 
         # Bundle's root dir path
-        self._root_dir = root_dir = dirname(module.__file__)
+        self._root_dir = root_dir = abspath(dirname(module.__file__))
 
         # Bundle resource directories paths
         self._res_dir = self._static_dir = self._tpl_dir = None  # type: Optional[str]

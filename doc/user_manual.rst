@@ -351,10 +351,17 @@ configuration parameter.
 Number of retained files is controlled via ``LOG_FILES_BACKUP_COUNT`` configuration parameter.
 
 
-Deploying to a Web Server
--------------------------
+Deploying
+---------
 
-To do.
+Generally deploying Ampho application to a web server is the same as `deploying a Flask application`_.
+
+One thing should be noted, that when `deploying to a uWSGI server`_, the ``ampho.application`` module name should be
+used as the application container, i. e.:
+
+.. sourcecode:: text
+
+    uwsgi --http :8080 --plugin=python --venv=./env --module=ampho.application
 
 
 .. _virtual environment: https://docs.python.org/3/tutorial/venv.html
@@ -373,3 +380,5 @@ To do.
 .. _TimedRotatingFileHandler: https://docs.python.org/3/library/logging.handlers.html#timedrotatingfilehandler
 .. _flask.render_template(): https://flask.palletsprojects.com/en/master/api/#flask.render_template
 .. _log messages format: https://docs.python.org/3/library/logging.html#logrecord-attributes
+.. _deploying a Flask application: https://flask.palletsprojects.com/en/master/deploying/
+.. _deploying to a uWSGI server: https://flask.palletsprojects.com/en/master/deploying/uwsgi/
