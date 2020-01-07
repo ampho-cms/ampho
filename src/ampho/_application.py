@@ -8,7 +8,7 @@ import logging
 from typing import List, Dict
 from copy import copy
 from os import environ, getenv, getcwd, makedirs
-from os.path import join as path_join, isfile
+from os.path import join as path_join, isfile, split as path_split, sep as path_sep
 from socket import gethostname
 from getpass import getuser
 from logging.handlers import TimedRotatingFileHandler
@@ -42,17 +42,20 @@ class Application(Flask):
         # Bundles are being loaded
         self._loading_bundles = []
 
-        # Application's root dir
-        kwargs.setdefault('root_path', getcwd())
-        root_path = kwargs['root_path']
+        # Application's root dir path
+        if 'root_path' not in kwargs:
+            if 'VIRTUAL_ENV' in environ:
+                kwargs['root_path'] = path_sep.join(path_split(getenv('VIRTUAL_ENV'))[:-1])
+            else:
+                kwargs['root_path'] = getcwd()
 
         # Construct instance path, because Flask constructs it in a wrong way in some cases
         if 'instance_path' not in kwargs:
-            kwargs['instance_path'] = path_join(root_path, 'instance')
+            kwargs['instance_path'] = path_join(kwargs['root_path'], 'instance')
 
         # Construct absolute path to static dir
         if 'static_folder' not in kwargs:
-            kwargs['static_folder'] = path_join(root_path, 'static')
+            kwargs['static_folder'] = path_join(kwargs['root_path'], 'static')
 
         # Set Flask environment name
         environ.setdefault('FLASK_ENV', 'production')
