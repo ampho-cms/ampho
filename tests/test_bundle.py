@@ -84,7 +84,7 @@ class TestBundle(AmphoApplicationTestCase):
     def test_render(self, tmp_path: str):
         """Test bundle's render method
         """
-        app = self.rand_app(tmp_path)
+        app = self.rand_app(tmp_path, [self.rand_bundle(tmp_path)])
         bundle = list(app.bundles.values())[0]  # type: Bundle
 
         bundle.render(bundle.name)

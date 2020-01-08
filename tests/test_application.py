@@ -14,16 +14,16 @@ class TestApplication(AmphoApplicationTestCase):
     def test_bundle_register(self, tmp_path: str):
         app = self.rand_app(tmp_path)
 
-        bundle_mod_name = self.rand_bundle(tmp_path)
-        bundle = app.register_bundle(bundle_mod_name)
+        b_name = self.rand_bundle(tmp_path)
+        bundle = app.register_bundle(b_name)
 
-        assert bundle == app.get_bundle(bundle_mod_name)
+        assert bundle == app.get_bundle(b_name)
         assert bundle.name in app.bundles
         assert isinstance(app.bundles, dict)
 
         # Try to register the same bundle twice
         with pytest.raises(BundleAlreadyRegisteredError):
-            app.register_bundle(bundle_mod_name)
+            app.register_bundle(b_name)
 
     def test_bundle_load(self, tmp_path: str):
         app = self.rand_app(tmp_path)
@@ -63,7 +63,7 @@ class TestApplication(AmphoApplicationTestCase):
         assert bundle.render(bundle.name, some_variable=bundle.name) == bundle.name
 
     def test_request(self, tmp_path: str):
-        client = self.rand_app(tmp_path).test_client()
+        client = self.rand_app(tmp_path, [self.rand_bundle(tmp_path)]).test_client()
         r_str = self.rand_str()
 
         assert client.get(f'/{r_str}').data == r_str.encode()

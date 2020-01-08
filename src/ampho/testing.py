@@ -28,7 +28,8 @@ class AmphoApplicationTestCase:
         """
         return ''.join(random.choice(string.ascii_lowercase) for _ in range(n_chars))
 
-    def rand_bundle(self, tmp_path: str, requires: List[str] = None, name: str = None) -> str:
+    def rand_bundle(self, tmp_path: str, requires: List[str] = None, name: str = None, append_content: str = '',
+                    append_views_content: str = '', append_commands_content: str = '') -> str:
         """Create a random bundle
         """
         # Add tmp_path to search path to allow import modules from there
@@ -45,9 +46,10 @@ class AmphoApplicationTestCase:
             '    pass\n'
             'def on_load():\n'
             '    pass\n'
+            f'{append_content}\n'
         ))
 
-        # Create view module
+        # Create views module
         view_name = self.rand_str()
         with open(os.path.join(pkg_path, 'views.py'), 'wt') as f:
             f.write(
@@ -55,6 +57,7 @@ class AmphoApplicationTestCase:
                 '@route("/<route_arg>")\n'
                 f'def {view_name}(route_arg):\n'
                 f'    return render("{name}", some_variable=route_arg)\n'
+                f'{append_views_content}\n'
             )
 
         # Create commands module
@@ -66,7 +69,8 @@ class AmphoApplicationTestCase:
                 f'CLI_HELP="{command_name}"\n'
                 '@command("/<name>")\n'
                 f'def {command_name}(name):\n'
-                '    return _("Hello %s") % name\n'
+                '    print(name)\n'
+                f'{append_commands_content}\n'
             )
 
         # Create templates directory
@@ -87,13 +91,9 @@ class AmphoApplicationTestCase:
 
         return name
 
-    def rand_app(self, tmp_path: str):
+    def rand_app(self, tmp_path: str, requirements: List[str] = None):
         """Create an Ampho application
         """
-        # Create bundles
-        bundle_name_1 = self.rand_bundle(tmp_path, [])
-        bundle_name_2 = self.rand_bundle(tmp_path, [bundle_name_1])
-
         # Create instance dir
         instance_dir = os.path.join(tmp_path, 'instance')
         os.mkdir(instance_dir)
@@ -105,10 +105,7 @@ class AmphoApplicationTestCase:
             json.dump(config, f)
 
         # Create application instance
-        app = Application([bundle_name_2], root_path=tmp_path)
+        app = Application(requirements, root_path=tmp_path)
         app.testing = True
-
-        # Check if the config was loaded
-        assert app.config.get(list(config.keys())[0]) == list(config.values())[0]
 
         return app

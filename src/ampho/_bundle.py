@@ -242,6 +242,8 @@ class Bundle:
         self._app.register_blueprint(self._bp, **reg_options)
 
         # Call bundle's initialization function
-        hasattr(self._module, 'on_load') and callable(self._module.on_load) and self._module.on_load()
+        if hasattr(self._module, 'on_load') and callable(self._module.on_load):
+            with self._app.app_context():
+                self._module.on_load()
 
         return self

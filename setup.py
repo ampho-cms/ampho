@@ -7,8 +7,7 @@ __license__ = 'MIT'
 
 import io
 import re
-from setuptools import find_packages
-from setuptools import setup
+from setuptools import find_packages, setup
 
 PKG_NAME = 'ampho'
 GITHUB_USER = 'ampho-cms'
@@ -16,7 +15,7 @@ GITHUB_USER = 'ampho-cms'
 with io.open('README.rst', 'rt') as f:
     readme = f.read()
 
-with io.open(f'src/{PKG_NAME}/__init__.py', 'rt') as f:
+with io.open(f'src/{PKG_NAME.replace("-", "_")}/__init__.py', 'rt') as f:
     content = f.read()
     description = re.search(r"__description__ = '(.*?)'", content).group(1)
     author = re.search(r"__author__ = '(.*?)'", content).group(1)
@@ -62,7 +61,6 @@ setup(
     install_requires=[
         'flask==1.*',
         'htmlmin==0.*',
-        'babel==2.*',
         'blinker==1.*',
     ],
     entry_points={

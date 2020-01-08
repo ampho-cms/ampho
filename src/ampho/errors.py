@@ -64,6 +64,7 @@ class BundleAlreadyLoadedError(BundleError):
 class BundleCircularDependencyError(BundleError):
     """Circular dependency detected while loading a bundle
     """
+
     def __init__(self, name: str, loading_stack: list):
         """Init
         """
@@ -74,4 +75,4 @@ class BundleCircularDependencyError(BundleError):
     def __str__(self) -> str:
         return f"Bundle '{self._name}' is already being loaded. " \
                "Check your setup against circular dependencies. " \
-                f"Loading stack content: {self._stack}"
+               f"Loading stack content: {self._stack}"

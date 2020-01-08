@@ -23,7 +23,7 @@ Build status
 Documentation
 -------------
 
-Plase visit https://ampho.readthedocs.io for details.
+Please visit https://ampho.readthedocs.io for details.
 
 
 Testing

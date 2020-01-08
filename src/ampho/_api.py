@@ -42,7 +42,7 @@ def get_caller_bundle(skip_frames: int = 1) -> Bundle:
 
             cur_path = cur_path[:-1]
 
-    raise RuntimeError('There is not bundle context set')  # pragma: no cover
+    raise RuntimeError('There is no bundle context set')  # pragma: no cover
 
 
 def route(rule: str, **options):

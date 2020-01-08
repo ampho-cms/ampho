@@ -5,7 +5,8 @@ __email__ = 'a@shepetko.com'
 __license__ = 'MIT'
 
 import logging
-from typing import List, Dict
+from typing import List, Mapping
+from collections import OrderedDict
 from copy import copy
 from os import environ, getenv, getcwd, makedirs
 from os.path import join as path_join, isfile, split as path_split, sep as path_sep
@@ -36,7 +37,7 @@ class Application(Flask):
         """Init
         """
         # Registered bundles
-        self._bundles = {}
+        self._bundles = OrderedDict()
         self._bundles_by_path = {}
 
         # Bundles are being loaded
@@ -112,7 +113,7 @@ class Application(Flask):
         return path_join(self.root_path, self.config.get('LOG_FILES_PATH', 'log'))
 
     @property
-    def bundles(self) -> Dict[str, Bundle]:
+    def bundles(self) -> Mapping[str, Bundle]:
         """Get registered bundles by module name
 
         :rtype: Dict[str, Bundle]
@@ -120,7 +121,7 @@ class Application(Flask):
         return copy(self._bundles)
 
     @property
-    def bundles_by_path(self) -> Dict[str, Bundle]:
+    def bundles_by_path(self) -> Mapping[str, Bundle]:
         """Get registered bundles by path
 
         :rtype: Dict[str, Bundle]
@@ -132,14 +133,13 @@ class Application(Flask):
 
         :param List[str] bundles: names of bundle modules which should be registered and loaded at application start.
         """
-        with self.app_context():
-            # Register bundles
-            for name in bundles:
-                self.register_bundle(name, True)
+        # Register bundles
+        for name in bundles:
+            self.register_bundle(name, True)
 
-            # Initialize bundles
-            for name in bundles:
-                self.load_bundle(name, True)
+        # Initialize bundles
+        for name in bundles:
+            self.load_bundle(name, True)
 
     def get_bundle(self, name: str) -> Bundle:
         """Get a bundle by name
