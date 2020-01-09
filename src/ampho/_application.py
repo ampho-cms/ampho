@@ -9,7 +9,7 @@ from typing import List, Mapping
 from collections import OrderedDict
 from copy import copy
 from os import environ, getenv, getcwd, makedirs
-from os.path import join as path_join, isfile, split as path_split, sep as path_sep
+from os.path import join as path_join, isfile, split as path_split, sep as path_sep, isdir
 from socket import gethostname
 from getpass import getuser
 from logging.handlers import TimedRotatingFileHandler
@@ -65,6 +65,11 @@ class Application(Flask):
         kwargs.setdefault('instance_relative_config', True)
         super().__init__(__name__, **kwargs)
 
+        # Create temporary directory
+        self._tmp_path = path_join(self.root_path, 'tmp')
+        if not isdir(self._tmp_path):
+            makedirs(self._tmp_path, 0o755)
+
         # Set logging level
         if self.debug:
             logging.getLogger().setLevel(logging.DEBUG)
@@ -105,6 +110,12 @@ class Application(Flask):
             response.set_data(minify(response.get_data(as_text=True)))
 
         return response
+
+    @property
+    def tmp_path(self) -> str:
+        """Get application temporary directory path
+        """
+        return self._tmp_path
 
     @property
     def log_path(self) -> str:

@@ -61,7 +61,7 @@ class Bundle:
         for d_name in ('res', 'static', 'tpl'):
             kw_d_name = kwargs.get(d_name)
             d_path = path_join(root_dir, kw_d_name or getattr(module, f'BUNDLE_{d_name.upper()}_DIR', d_name))
-            setattr(self, f'_{d_name}_dir', d_path if isdir(d_path) else None)
+            setattr(self, f'_{d_name}_dir', d_path)
 
         # Routes URLs defaults
         self._url_defaults = kwargs.get('url_defaults', getattr(module, 'BUNDLE_URL_DEFAULTS', {}))  # type: dict
@@ -123,19 +123,19 @@ class Bundle:
         return self._root_dir
 
     @property
-    def res_dir(self) -> Optional[str]:
+    def res_dir(self) -> str:
         """Bundle's resource dir location
         """
         return self._res_dir
 
     @property
-    def static_dir(self) -> Optional[str]:
+    def static_dir(self) -> str:
         """Bundle's static dir location
         """
         return self._static_dir
 
     @property
-    def tpl_dir(self) -> Optional[str]:
+    def tpl_dir(self) -> str:
         """Bundle's templates dir location
         """
         return self._tpl_dir
