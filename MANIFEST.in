@@ -1,0 +1,2 @@
+global-include *.rst
+global-include src *.ini
