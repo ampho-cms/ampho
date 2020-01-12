@@ -51,12 +51,6 @@ def route(rule: str, **options):
     return get_caller_bundle().route(rule, **options)
 
 
-def command(*args, **kwargs):
-    """Decorator for CLI commands definition
-    """
-    return get_caller_bundle().command(*args, **kwargs)
-
-
 def render(tpl: str, **args) -> str:
     """Render a template
     """
