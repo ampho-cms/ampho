@@ -64,10 +64,10 @@ class AmphoApplicationTestCase:
         command_name = self.rand_str()
         with open(os.path.join(pkg_path, 'commands.py'), 'wt') as f:
             f.write(
-                'from ampho import command\n'
+                'from ampho import cli\n'
                 f'CLI_GROUP = "{name}"\n'
                 f'CLI_HELP="{command_name}"\n'
-                '@command("/<name>")\n'
+                '@cli.command("/<name>")\n'
                 f'def {command_name}(name):\n'
                 '    print(name)\n'
                 f'{append_commands_content}\n'

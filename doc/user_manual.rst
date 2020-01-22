@@ -281,14 +281,14 @@ commands code by placing them into separate module named ``commands``.
         /instance
 
 Once you have module named ``commands`` in a bundle, Ampho will import it automatically at bundle loading time, so
-everything you need to do is to place commands' functions into it, wrapping them with ``ampho.command()`` decorator.
+everything you need to do is to place commands' functions into it, wrapping them with ``ampho.cli.command()`` decorator.
 
 .. sourcecode:: python
 
-    from ampho import command
+    from ampho import cli
     from click import echo
 
-    @command('hello')
+    @cli.command('hello')
     def hello():
         echo('Hello, world')
 
@@ -307,13 +307,13 @@ command without arguments.
 
 .. sourcecode:: python
 
-    from ampho import command
+    from ampho import cli
     from click import echo
 
     CLI_GROUP = 'my_app'
     CLI_HELP = 'Set of extremely useful commands'
 
-    @command('hello')
+    @cli.command('hello')
     def hello():
         echo('Hello, world')
 
