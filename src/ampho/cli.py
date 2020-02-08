@@ -6,7 +6,6 @@ __license__ = 'MIT'
 
 import click
 from typing import Any
-from sys import exit
 from ._api import get_caller_bundle
 
 
@@ -16,37 +15,37 @@ def command(*args, **kwargs):
     return get_caller_bundle().command(*args, **kwargs)
 
 
-def echo(s: Any, fg: str = None, bg: str = None, err: bool = False):
+def echo(message: Any, fg: str = None, bg: str = None, err: bool = False):
     """Echo a message
     """
-    if not isinstance(s, str):
-        s = str(s)
+    if not isinstance(message, str):
+        message = str(message)
 
-    click.secho(s, fg=fg, bg=bg, err=err)
+    click.secho(message, fg=fg, bg=bg, err=err)
 
 
-def echo_info(s: Any):
+def echo_info(message: Any):
     """Echo an info message
     """
-    echo(s, 'blue')
+    echo(message, 'blue')
 
 
-def echo_success(s: Any):
+def echo_success(message: Any):
     """Echo a success message
     """
-    echo(s, 'green')
+    echo(message, 'green')
 
 
-def echo_warning(s: Any):
+def echo_warning(message: Any):
     """Echo a warning message
     """
-    echo(s, 'yellow')
+    echo(message, 'yellow')
 
 
-def echo_error(s: Any, do_exit: bool = False, exit_code: int = 1):
-    """Echo an error message to stderr and optionally call sys.exit()
+def echo_error(message: Any, do_exit: bool = False, exit_code: int = 1):
+    """Echo an error message to stderr and optionally raise SystemExit
     """
-    echo(s, 'red', err=True)
+    echo(message, 'red', err=True)
 
     if do_exit:
-        exit(exit_code)
+        raise SystemExit(exit_code)

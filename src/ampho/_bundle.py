@@ -4,10 +4,12 @@ __author__ = 'Oleksandr Shepetko'
 __email__ = 'a@shepetko.com'
 __license__ = 'MIT'
 
+import sys
+import logging
 from typing import Optional, Tuple
 from types import ModuleType
 from importlib import import_module
-from os.path import isdir, join as path_join, dirname, basename, abspath
+from os.path import join as path_join, dirname, basename, abspath
 from flask import Blueprint, render_template
 from flask.cli import AppGroup
 from .errors import BundleImportError, BundleNotLoadedError, BundleAlreadyLoadedError
@@ -37,6 +39,10 @@ class Bundle:
         """
         # Import bundle's module
         try:
+            # Bundle's cached module should be ignored to make some testing cases possible
+            if name in sys.modules:
+                del sys.modules[name]
+
             self._module = module = import_module(name)
         except ImportError:
             raise BundleImportError(name)
@@ -225,9 +231,15 @@ class Bundle:
             try:
                 # Import submodule within bundle context
                 with self._app.app_context() as ctx:
-                    sub_abs_name = f'{self._name}.{sub_name}'
+                    submodule_abs_name = f'{self._name}.{sub_name}'
+
+                    # Bundle's cached submodule should be ignored to make some testing cases possible
+                    if submodule_abs_name in sys.modules:
+                        del sys.modules[submodule_abs_name]
+
                     ctx.g.current_bundle = self  # Make current bundle accessible in the currently imported module
-                    module = import_module(sub_abs_name)
+                    module = import_module(submodule_abs_name)
+                    logging.debug("Bundle's module imported: " + submodule_abs_name)
 
                     if sub_name == 'commands':
                         if hasattr(module, 'CLI_GROUP'):

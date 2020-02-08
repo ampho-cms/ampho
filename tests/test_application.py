@@ -59,8 +59,7 @@ class TestApplication(AmphoApplicationTestCase):
 
         # Random bundle has a template which contains a string.
         # Both template name and that string equal to the bundle's name.
-        # See `conftest.py` for details
-        assert bundle.render(bundle.name, some_variable=bundle.name) == bundle.name
+        assert bundle.render(bundle.name + '.jinja2', some_variable=bundle.name) == bundle.name
 
     def test_request(self, tmp_path: str):
         client = self.rand_app(tmp_path, [self.rand_bundle(tmp_path)]).test_client()
