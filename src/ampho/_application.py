@@ -70,16 +70,16 @@ class Application(Flask):
         if not isdir(self._tmp_path):
             makedirs(self._tmp_path, 0o755)
 
-        # Set logging level
-        if self.debug:
-            logging.getLogger().setLevel(logging.DEBUG)
-
         # Load configuration
         config_names = ['default', getenv('FLASK_ENV'), f'{getuser()}@{gethostname()}']
         for config_name in config_names:
             config_path = path_join(self.instance_path, config_name) + '.json'
             if isfile(config_path):
                 self.config.from_json(config_path)
+
+        # Set logging level
+        if self.debug or self.testing:
+            logging.getLogger().setLevel(logging.DEBUG)
 
         # Initialize timed rotating file logger handler
         if int(self.config.get('LOG_FILES_ENABLED', '1')):
@@ -194,6 +194,9 @@ class Application(Flask):
         bundle.register()
         bundle_registered.send(bundle)
 
+        # Log
+        logging.debug("Bundle registered: {}, {}".format(bundle.name, bundle.root_dir))
+
         return bundle
 
     def load_bundle(self, name: str, skip_loaded: bool = False) -> Bundle:
@@ -229,6 +232,9 @@ class Application(Flask):
 
             # Load the bundle
             bundle.load(self)
+
+            # Log
+            logging.debug("Bundle '{}' loaded".format(bundle.name))
 
         finally:
             self._loading_bundles.pop()
