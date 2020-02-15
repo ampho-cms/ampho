@@ -87,4 +87,4 @@ class TestBundle(AmphoApplicationTestCase):
         app = self.rand_app(tmp_path, [self.rand_bundle(tmp_path)])
         bundle = list(app.bundles.values())[0]  # type: Bundle
 
-        bundle.render(bundle.name)
+        bundle.render(bundle.name + '.jinja2')

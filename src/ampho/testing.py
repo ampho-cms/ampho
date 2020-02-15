@@ -1,4 +1,4 @@
-"""Ampho Base Test Cases
+"""Ampho Base Test Case
 """
 __author__ = 'Oleksandr Shepetko'
 __email__ = 'a@shepetko.com'
@@ -23,13 +23,20 @@ class AmphoApplicationTestCase:
             f.write(content)
 
     @staticmethod
+    def rand_int(a: int = 0, b: int = sys.maxsize):
+        """Generate a random integer
+        """
+        return random.randint(a, b)
+
+    @staticmethod
     def rand_str(n_chars: int = 8) -> str:
         """Generate a random string
         """
         return ''.join(random.choice(string.ascii_lowercase) for _ in range(n_chars))
 
-    def rand_bundle(self, tmp_path: str, requires: List[str] = None, name: str = None, append_content: str = '',
-                    append_views_content: str = '', append_commands_content: str = '') -> str:
+    def rand_bundle(self, tmp_path: str, requires: List[str] = None, name: str = None,
+                    on_register: str = '    pass', on_load: str = '    pass',
+                    append_init: str = '', append_views: str = '', append_commands: str = '') -> str:
         """Create a random bundle
         """
         # Add tmp_path to search path to allow import modules from there
@@ -41,36 +48,36 @@ class AmphoApplicationTestCase:
         requires_str = ', '.join([f'"{b_name}"' for b_name in requires or []])
 
         self._create_package(pkg_path, (
-            f'BUNDLE_REQUIRES = [{requires_str}]\n'
+            f'BUNDLE_REQUIRES = [{requires_str}]\n\n'
             'def on_register():\n'
-            '    pass\n'
+            f'{on_register}\n\n'
             'def on_load():\n'
-            '    pass\n'
-            f'{append_content}\n'
+            f'{on_load}\n\n'
+            f'{append_init}\n'
         ))
 
         # Create views module
         view_name = self.rand_str()
         with open(os.path.join(pkg_path, 'views.py'), 'wt') as f:
             f.write(
-                'from ampho import route, render\n'
+                'from ampho import route, render\n\n'
                 '@route("/<route_arg>")\n'
                 f'def {view_name}(route_arg):\n'
-                f'    return render("{name}", some_variable=route_arg)\n'
-                f'{append_views_content}\n'
+                f'    return render("{name}.jinja2", some_variable=route_arg)\n\n'
+                f'{append_views}\n'
             )
 
         # Create commands module
         command_name = self.rand_str()
         with open(os.path.join(pkg_path, 'commands.py'), 'wt') as f:
             f.write(
-                'from ampho import command\n'
+                'from ampho import cli\n\n'
                 f'CLI_GROUP = "{name}"\n'
-                f'CLI_HELP="{command_name}"\n'
-                '@command("/<name>")\n'
+                f'CLI_HELP = "{command_name}"\n\n'
+                '@cli.command("/<name>")\n'
                 f'def {command_name}(name):\n'
-                '    print(name)\n'
-                f'{append_commands_content}\n'
+                '    print(name)\n\n'
+                f'{append_commands}\n'
             )
 
         # Create templates directory
@@ -86,7 +93,7 @@ class AmphoApplicationTestCase:
         os.makedirs(res_d_path, 0o750)
 
         # Create template
-        with open(os.path.join(tpl_d_path, name), 'wt') as f:
+        with open(os.path.join(tpl_d_path, name + '.jinja2'), 'wt') as f:
             f.write('{{some_variable}}')
 
         return name
@@ -100,12 +107,12 @@ class AmphoApplicationTestCase:
 
         # Create configuration
         config_path = os.path.join(instance_dir, os.getenv('FLASK_ENV', 'production')) + '.json'
-        config = {self.rand_str().upper(): self.rand_str().upper()}
+        config = {
+            'TESTING': True,
+            self.rand_str().upper(): self.rand_str(),
+        }
         with open(config_path, 'wt') as f:
             json.dump(config, f)
 
         # Create application instance
-        app = Application(requirements, root_path=tmp_path)
-        app.testing = True
-
-        return app
+        return Application(requirements, root_path=tmp_path)
