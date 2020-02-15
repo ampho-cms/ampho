@@ -1,4 +1,4 @@
-"""Ampho Base Test Cases
+"""Ampho Base Test Case
 """
 __author__ = 'Oleksandr Shepetko'
 __email__ = 'a@shepetko.com'
@@ -23,13 +23,20 @@ class AmphoApplicationTestCase:
             f.write(content)
 
     @staticmethod
+    def rand_int(a: int = 0, b: int = sys.maxsize):
+        """Generate a random integer
+        """
+        return random.randint(a, b)
+
+    @staticmethod
     def rand_str(n_chars: int = 8) -> str:
         """Generate a random string
         """
         return ''.join(random.choice(string.ascii_lowercase) for _ in range(n_chars))
 
-    def rand_bundle(self, tmp_path: str, requires: List[str] = None, name: str = None, append_content: str = '',
-                    append_views_content: str = '', append_commands_content: str = '') -> str:
+    def rand_bundle(self, tmp_path: str, requires: List[str] = None, name: str = None,
+                    on_register: str = '    pass', on_load: str = '    pass',
+                    append_init: str = '', append_views: str = '', append_commands: str = '') -> str:
         """Create a random bundle
         """
         # Add tmp_path to search path to allow import modules from there
@@ -43,10 +50,10 @@ class AmphoApplicationTestCase:
         self._create_package(pkg_path, (
             f'BUNDLE_REQUIRES = [{requires_str}]\n\n'
             'def on_register():\n'
-            '    pass\n\n'
+            f'{on_register}\n\n'
             'def on_load():\n'
-            '    pass\n\n'
-            f'{append_content}\n'
+            f'{on_load}\n\n'
+            f'{append_init}\n'
         ))
 
         # Create views module
@@ -57,7 +64,7 @@ class AmphoApplicationTestCase:
                 '@route("/<route_arg>")\n'
                 f'def {view_name}(route_arg):\n'
                 f'    return render("{name}.jinja2", some_variable=route_arg)\n\n'
-                f'{append_views_content}\n'
+                f'{append_views}\n'
             )
 
         # Create commands module
@@ -70,7 +77,7 @@ class AmphoApplicationTestCase:
                 '@cli.command("/<name>")\n'
                 f'def {command_name}(name):\n'
                 '    print(name)\n\n'
-                f'{append_commands_content}\n'
+                f'{append_commands}\n'
             )
 
         # Create templates directory
