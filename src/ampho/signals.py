@@ -8,5 +8,5 @@ from blinker import Namespace
 
 _signals = Namespace()
 
-# Fires after a new bundle registered
+# After a new bundle registered
 bundle_registered = _signals.signal('bundle-registered')

@@ -195,7 +195,7 @@ class Application(Flask):
         bundle_registered.send(bundle)
 
         # Log
-        logging.debug("Bundle registered: {}, {}".format(bundle.name, bundle.root_dir))
+        logging.debug("Bundle registered: %s, %s", bundle.name, bundle.root_dir)
 
         return bundle
 
@@ -234,7 +234,7 @@ class Application(Flask):
             bundle.load(self)
 
             # Log
-            logging.debug("Bundle '{}' loaded".format(bundle.name))
+            logging.debug("Bundle '%s' loaded", bundle.name)
 
         finally:
             self._loading_bundles.pop()

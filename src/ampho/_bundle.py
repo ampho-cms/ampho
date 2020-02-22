@@ -204,7 +204,8 @@ class Bundle:
         """Register the bundle
         """
         # Call bundle's initialization function
-        hasattr(self._module, 'on_register') and callable(self._module.on_register) and self._module.on_register()
+        if hasattr(self._module, 'on_register') and callable(self._module.on_register):
+            self._module.on_register()
 
         return self
 
@@ -239,7 +240,7 @@ class Bundle:
 
                     ctx.g.current_bundle = self  # Make current bundle accessible in the currently imported module
                     module = import_module(submodule_abs_name)
-                    logging.debug("Bundle's module imported: " + submodule_abs_name)
+                    logging.debug("Bundle's module imported: %s", submodule_abs_name)
 
                     if sub_name == 'commands':
                         if hasattr(module, 'CLI_GROUP'):

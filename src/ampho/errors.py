@@ -8,7 +8,6 @@ __license__ = 'MIT'
 class AmphoError(Exception):
     """Base Ampho error
     """
-    pass
 
 
 class BundleError(AmphoError):
@@ -18,6 +17,7 @@ class BundleError(AmphoError):
     def __init__(self, name: str):
         """Init
         """
+        super().__init__()
         self._name = name
 
 

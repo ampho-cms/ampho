@@ -14,6 +14,9 @@ from ._application import Application
 
 
 class AmphoApplicationTestCase:
+    """Base Ampho application test case
+    """
+
     @staticmethod
     def _create_package(pkg_dir_path, content: str = ''):
         """Create a Python package

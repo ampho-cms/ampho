@@ -12,5 +12,7 @@ application = Application([b for b in environ.get('AMPHO_BUNDLES', 'app').split(
 
 
 def main():
+    """Main
+    """
     environ['FLASK_APP'] = 'ampho.application'
     FlaskGroup().main(prog_name='ampho')
