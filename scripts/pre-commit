@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+set -e
+
+pylint src
+doc8 doc
+pytest -x tests

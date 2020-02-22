@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+set -e
+
+GIT_DIR=$(git rev-parse --git-dir)
+
+[ -h ${GIT_DIR}/hooks/pre-commit ] || ln -vs ../../scripts/pre-commit ${GIT_DIR}/hooks/pre-commit
