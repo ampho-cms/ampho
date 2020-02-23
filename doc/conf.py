@@ -18,11 +18,11 @@ sys.path.insert(0, os.path.abspath('../src'))
 # -- Project information -----------------------------------------------------
 
 project = 'Ampho'
-copyright = '2019, Oleksandr Shepetko'
+copyright = '2019-present, Oleksandr Shepetko'
 author = 'Oleksandr Shepetko'
 
 # The full version, including alpha/beta/rc tags
-release = '0.1'
+release = '0.2'
 
 
 # -- General configuration ---------------------------------------------------
