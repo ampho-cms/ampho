@@ -1,7 +1,8 @@
 Ampho
 =====
 
-**Ampho** is the core part of the `Ampho CMS`_.
+**Ampho** is a Python library that provides simple and convenient way to develop `Flask`_ applications by splitting them
+into small, easily maintainable parts. Also **Ampho** is the core part of the `Ampho CMS`_.
 
 
 Build status
@@ -23,17 +24,13 @@ Build status
 Documentation
 -------------
 
-Please visit https://ampho.readthedocs.io for details.
+Please visit `documentation website`_ for details.
 
 
-Testing
--------
+Changelog
+---------
 
-Install `tox`_,  chdir into the project directory and issue command:
-
-.. sourcecode:: text
-
-    tox
+Please refer to the `CHANGELOG.rst`_ for details.
 
 
 Support
@@ -61,8 +58,9 @@ This project is licensed under the MIT License. See the `LICENSE.rst`_ file for 
 
 
 .. _Ampho CMS: https://ampho.xyz
-.. _tox: https://pypi.org/project/tox
+.. _documentation website: https://ampho.readthedocs.io
+.. _CHANGELOG.rst: CHANGELOG.rst
 .. _issue tracker: https://github.com/ampho-cms/ampho/issues
+.. _CONTRIBUTING.rst: CONTRIBUTING.rst
 .. _Oleksandr Shepetko: https://shepetko.com
 .. _LICENSE.rst: LICENSE.rst
-.. _CONTRIBUTING.rst: CONTRIBUTING.rst
