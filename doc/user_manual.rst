@@ -19,7 +19,7 @@ Ampho and Flask
 It is important to notice again, that Ampho is **not** a standalone framework. It should be considered as a helper
 library, that may help make development process of Flask applications a little bit easier. It means that you don't have
 to change your development workflow significantly, as well as you don't have to learn new concepts besides couple ones,
-which are described in this document. For all other information, please, check Flask's official documentation.
+which are described in this document. For all other information please check Flask's official documentation.
 
 
 Root Directory
@@ -47,7 +47,7 @@ Virtual Environment
 -------------------
 
 During all this manual it is assumed, that you use Python's `virtual environment`_ to develop and run your application.
-Following traditions, virtual environment usually is located in the root directory:
+Virtual environment is often located in the root directory:
 
 .. sourcecode:: text
 
@@ -67,7 +67,7 @@ So, after virtual environment installation you'll have following directory struc
 Installation
 ------------
 
-To install latest version of the Ampho use one simple command:
+To install latest version of the Ampho, use one simple command:
 
 .. sourcecode:: text
 
@@ -95,9 +95,8 @@ The "app" bundle
 
 Bundle's name ``app`` is a little bit special. The thing is, when the Ampho application starts, it should know what
 bundles should be loaded. You can specify list of such bundles using environment variable or configuration parameter
-``BUNDLES``, but if you don't do this, Ampho will try to load at least one
-bundle named ``app``. So for simple setups you even don't have to specify application's "main" bundle, simply give the
-``app`` name to it.
+``BUNDLES``, but if you don't do this, Ampho will try to load at least one bundle named ``app``. So for simple setups
+you even don't have to specify application's "main" bundle, simply give the ``app`` name to it.
 
 
 Creating a bundle
@@ -111,7 +110,7 @@ have following files layout:
 
     /hello-world
         /app
-            /__init__.py
+            __init__.py
         /env
         /instance
 
@@ -132,7 +131,7 @@ And voila, you have your application running!
 
 .. sourcecode:: text
 
-    * Serving Flask app "ampho._cli:app"
+    * Serving Flask app "ampho.application"
     * Environment: production
       WARNING: This is a development server. Do not use it in a production deployment.
       Use a production WSGI server instead.
@@ -154,10 +153,10 @@ function, if you need actions to be performed at bundle loading time.
 .. sourcecode:: python
 
     def on_register():
-        print('Bundle is registered.')
+        print('Bundle is registered')
 
     def on_load():
-        print('Bundle is loaded.')
+        print('Bundle is loaded')
 
 
 Bundle requirements
@@ -175,7 +174,7 @@ strings property in bundle's ``__init__.py``, i. e.:
 Application configuration
 -------------------------
 
-Ampho application is configured in the same way as `Flask ones <https://flask.palletsprojects.com/en/master/config/>`_.
+Ampho applications are configured the same way as `Flask ones <https://flask.palletsprojects.com/en/master/config/>`_.
 In addition to Flask' configuration mechanism, Ampho provides another one convenient way to handle and distribute
 application's configuration using JSON files with pre-defined names, located in the `instance directory`_.
 
@@ -186,10 +185,10 @@ When Ampho application starts, it searches for configuration files in the follow
 #. ``{username}@{hostname}.json``
 
 
-where parameters from each next file are merged with a previous one. The ``default.json`` file is loaded always. The
-``{environment}.json`` is loaded only if ``{environment}`` corresponds to current ``${FLASK_ENV}`` environment variable.
-And the ``{username}@{hostname}.json`` will be loaded only if ``{username}`` and ``{hostname}`` are correspond to the
-``${USER}`` and ``${HOSTNAME}`` environment variables.
+where parameters from each next file are merged with a previous one. The ``default.json`` file is being loaded always.
+The ``{environment}.json`` is loaded only if ``{environment}`` corresponds to current ``${FLASK_ENV}`` environment
+variable. And the ``{username}@{hostname}.json`` will be loaded only if ``{username}`` and ``{hostname}`` are correspond
+to the ``${USER}`` and ``${HOSTNAME}`` environment variables.
 
 For example, some application can have following configuration files set:
 
@@ -211,7 +210,7 @@ Routing
 -------
 
 In general it doesn't matter where exactly views code is located, but Ampho proposes a convenient way to organize
-views' and map it to URLs.
+views and map them to URLs.
 
 When Ampho loads a bundle, it checks for the ``views`` module presence in the bundle's package, and, if it's
 present, Ampho automatically imports it within bundle's context, so you can easily use ``views`` module to define
@@ -228,7 +227,7 @@ Let's look how this works. At first, of course, we need to create ``views`` modu
         /env
         /instance
 
-Now open newly created ``views.py`` file and place some code there:
+And place some code there:
 
 .. sourcecode:: python
 
@@ -248,7 +247,8 @@ rules, different HTTP methods and so on.
 
 .. note::
 
-    Dont forget to use ``route()`` decorator from the ``ampho`` package instead of the ``flask``'s one.
+    Dont forget to use ``route()`` decorator from the ``ampho`` package instead of the ``flask``'s one, because it
+    does some kind of magic while dealing with bundles.
 
 For all other aspects of working with routing, please refer to the `Flask routing guide`_.
 
@@ -285,12 +285,11 @@ everything you need to do is to place commands' functions into it, wrapping them
 
 .. sourcecode:: python
 
-    from ampho import cli
-    from click import echo
+    from ampho import cli, echo_info
 
     @cli.command('hello')
     def hello():
-        echo('Hello, world')
+        echo_info('Hello, world')
 
 
 That's all. Now, you can run your command from CLI:
@@ -307,15 +306,14 @@ command without arguments.
 
 .. sourcecode:: python
 
-    from ampho import cli
-    from click import echo
+    from ampho import cli, echo_info
 
     CLI_GROUP = 'my_app'
     CLI_HELP = 'Set of extremely useful commands'
 
     @cli.command('hello')
     def hello():
-        echo('Hello, world')
+        echo_info('Hello, world')
 
 For all other aspects of working with CLI commands, please refer to the `Flask CLI guide`_.
 
@@ -372,7 +370,6 @@ used as the application container, i. e.:
 .. _Flask routing: https://flask.palletsprojects.com/en/master/quickstart/#routing
 .. _URLs: https://en.wikipedia.org/wiki/URL
 .. _Jinja: https://jinja.palletsprojects.com
-.. _Flask's application context: https://flask.palletsprojects.com/en/master/appcontext/
 .. _flask.render_template() function: https://flask.palletsprojects.com/en/master/api/#flask.render_template
 .. _Flask routing guide: https://flask.palletsprojects.com/en/master/quickstart/#routing
 .. _Flask CLI guide: https://flask.palletsprojects.com/en/master/cli/
