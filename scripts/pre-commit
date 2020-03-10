@@ -3,5 +3,7 @@
 set -e
 
 pylint src
-doc8 doc
+mypy src
+bandit -r src
+doc8
 pytest -x tests
