@@ -4,6 +4,6 @@ set -e
 
 pylint src
 mypy src
-bandit -r src
+bandit -c .bandit.yml -r src
 doc8
 pytest -x tests

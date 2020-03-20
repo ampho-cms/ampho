@@ -57,6 +57,7 @@ License
 This project is licensed under the MIT License. See the `LICENSE.rst`_ file for details.
 
 
+.. _Flask: https://palletsprojects.com/p/flask/
 .. _Ampho CMS: https://ampho.xyz
 .. _documentation website: https://ampho.readthedocs.io
 .. _CHANGELOG.rst: CHANGELOG.rst

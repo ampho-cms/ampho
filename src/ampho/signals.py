@@ -4,7 +4,7 @@ __author__ = 'Oleksandr Shepetko'
 __email__ = 'a@shepetko.com'
 __license__ = 'MIT'
 
-from blinker import Namespace
+from blinker import Namespace  # type: ignore
 
 _signals = Namespace()
 

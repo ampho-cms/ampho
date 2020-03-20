@@ -5,7 +5,7 @@ __email__ = 'a@shepetko.com'
 __license__ = 'MIT'
 
 import logging
-from typing import List, Mapping
+from typing import List, Mapping, Dict, Optional
 from collections import OrderedDict
 from copy import copy
 from os import environ, getenv, getcwd, makedirs
@@ -14,7 +14,7 @@ from socket import gethostname
 from getpass import getuser
 from logging.handlers import TimedRotatingFileHandler
 from flask import Flask, Response
-from htmlmin import minify
+from htmlmin import minify  # type: ignore
 from .errors import BundleNotRegisteredError, BundleAlreadyRegisteredError, BundleCircularDependencyError, \
     BundleAlreadyLoadedError
 from ._bundle import Bundle
@@ -33,20 +33,20 @@ class Application(Flask):
            is ``True``.
     """
 
-    def __init__(self, bundles: List[str] = None, **kwargs):
+    def __init__(self, bundles: Optional[List[str]] = None, **kwargs):
         """Init
         """
         # Registered bundles
-        self._bundles = OrderedDict()
-        self._bundles_by_path = {}
+        self._bundles: Dict[str, Bundle] = OrderedDict()
+        self._bundles_by_path: Dict[str, Bundle] = {}
 
         # Bundles are being loaded
-        self._loading_bundles = []
+        self._loading_bundles: List[str] = []
 
         # Application's root dir path
         if 'root_path' not in kwargs:
             if 'VIRTUAL_ENV' in environ:
-                kwargs['root_path'] = path_sep.join(path_split(getenv('VIRTUAL_ENV'))[:-1])
+                kwargs['root_path'] = path_sep.join(path_split(getenv('VIRTUAL_ENV', ''))[:-1])
             else:
                 kwargs['root_path'] = getcwd()
 
@@ -66,12 +66,13 @@ class Application(Flask):
         super().__init__(__name__, **kwargs)
 
         # Create temporary directory
-        self._tmp_path = path_join(self.root_path, 'tmp')
+        self._tmp_path: str
+        self._tmp_path = path_join(self.root_path, 'tmp')  # type: ignore
         if not isdir(self._tmp_path):
             makedirs(self._tmp_path, 0o755)
 
         # Load configuration
-        config_names = ['default', getenv('FLASK_ENV'), f'{getuser()}@{gethostname()}']
+        config_names = ['default', getenv('FLASK_ENV', ''), f'{getuser()}@{gethostname()}']
         for config_name in config_names:
             config_path = path_join(self.instance_path, config_name) + '.json'
             if isfile(config_path):
@@ -96,7 +97,8 @@ class Application(Flask):
         bundles = (bundles or []) + self.config.get('BUNDLES', [])
 
         # Let derived class to perform setup
-        self.on_init(bundles)
+        if bundles:
+            self.on_init(bundles)
 
         # Minify output in production mode
         if not self.debug:
@@ -106,7 +108,7 @@ class Application(Flask):
     def _minify(response: Response) -> Response:
         """Minify response
         """
-        if response.content_type.startswith('text/html'):
+        if isinstance(response.content_type, str) and response.content_type.startswith('text/html'):
             response.set_data(minify(response.get_data(as_text=True)))
 
         return response
@@ -121,7 +123,7 @@ class Application(Flask):
     def log_path(self) -> str:
         """Get log directory path
         """
-        return path_join(self.root_path, self.config.get('LOG_FILES_PATH', 'log'))
+        return path_join(self.root_path, self.config.get('LOG_FILES_PATH', 'log'))  # type: ignore
 
     @property
     def bundles(self) -> Mapping[str, Bundle]:

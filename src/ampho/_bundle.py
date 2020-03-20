@@ -63,7 +63,7 @@ class Bundle:
         self._root_dir = root_dir = abspath(dirname(module.__file__))
 
         # Bundle resource directories paths
-        self._res_dir = self._static_dir = self._tpl_dir = None  # type: Optional[str]
+        self._res_dir = self._static_dir = self._tpl_dir = ''
         for d_name in ('res', 'static', 'tpl'):
             kw_d_name = kwargs.get(d_name)
             d_path = path_join(root_dir, kw_d_name or getattr(module, f'BUNDLE_{d_name.upper()}_DIR', d_name))
@@ -117,7 +117,7 @@ class Bundle:
         return self._app is not None
 
     @property
-    def blueprint(self) -> Blueprint:
+    def blueprint(self) -> Optional[Blueprint]:
         """Bundle's `blueprint <https://flask.palletsprojects.com/en/master/api/#flask.Blueprint>`_.
         """
         return self._bp
@@ -174,7 +174,7 @@ class Bundle:
     def cli(self) -> AppGroup:
         """Bundle's `AppGroup <https://flask.palletsprojects.com/en/master/api/#command-line-interface>`_.
         """
-        return self._bp.cli
+        return self._bp.cli  # type: ignore
 
     @property
     def command(self):
