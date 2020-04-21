@@ -1,15 +1,15 @@
 """Ampho Application
 """
-__author__ = 'Oleksandr Shepetko'
+__author__ = 'Alexander Shepetko'
 __email__ = 'a@shepetko.com'
 __license__ = 'MIT'
 
 import logging
-from typing import List, Mapping, Dict, Optional
+import pkgutil
+from typing import List, Mapping, Dict
 from collections import OrderedDict
 from copy import copy
-from os import environ, getenv, getcwd, makedirs
-from os.path import join as path_join, isfile, split as path_split, sep as path_sep, isdir
+from os import environ, getenv, makedirs, path
 from socket import gethostname
 from getpass import getuser
 from logging.handlers import TimedRotatingFileHandler
@@ -33,7 +33,7 @@ class Application(Flask):
            is ``True``.
     """
 
-    def __init__(self, bundles: Optional[List[str]] = None, **kwargs):
+    def __init__(self, **kwargs):
         """Init
         """
         # Registered bundles
@@ -43,20 +43,27 @@ class Application(Flask):
         # Bundles are being loaded
         self._loading_bundles: List[str] = []
 
+        # Application bundle package name
+        self._entry_bundle_name = getenv('AMPHO_ENTRY', 'app')
+
+        # Check for application bundle package existence
+        app_mod_info = pkgutil.get_loader(self._entry_bundle_name)
+        if not app_mod_info:
+            raise ImportError("Package '{}' is not found."
+                              "Use AMPHO_ENTRY environment variable "
+                              "to specify another package name.".format(self._entry_bundle_name))
+
         # Application's root dir path
         if 'root_path' not in kwargs:
-            if 'VIRTUAL_ENV' in environ:
-                kwargs['root_path'] = path_sep.join(path_split(getenv('VIRTUAL_ENV', ''))[:-1])
-            else:
-                kwargs['root_path'] = getcwd()
+            kwargs['root_path'] = path.abspath(path.join(path.dirname(getattr(app_mod_info, 'path')), path.pardir))
 
         # Construct instance path, because Flask constructs it in a wrong way in some cases
         if 'instance_path' not in kwargs:
-            kwargs['instance_path'] = path_join(kwargs['root_path'], 'instance')
+            kwargs['instance_path'] = path.join(kwargs['root_path'], 'instance')
 
         # Construct absolute path to static dir
         if 'static_folder' not in kwargs:
-            kwargs['static_folder'] = path_join(kwargs['root_path'], 'static')
+            kwargs['static_folder'] = path.join(kwargs['root_path'], 'static')
 
         # Set Flask environment name
         environ.setdefault('FLASK_ENV', 'production')
@@ -67,15 +74,15 @@ class Application(Flask):
 
         # Create temporary directory
         self._tmp_path: str
-        self._tmp_path = path_join(self.root_path, 'tmp')  # type: ignore
-        if not isdir(self._tmp_path):
+        self._tmp_path = path.join(self.root_path, 'tmp')  # type: ignore
+        if not path.isdir(self._tmp_path):
             makedirs(self._tmp_path, 0o755)
 
         # Load configuration
         config_names = ['default', getenv('FLASK_ENV', ''), f'{getuser()}@{gethostname()}']
         for config_name in config_names:
-            config_path = path_join(self.instance_path, config_name) + '.json'
-            if isfile(config_path):
+            config_path = path.join(self.instance_path, config_name) + '.json'
+            if path.isfile(config_path):
                 self.config.from_json(config_path)
 
         # Set logging level
@@ -85,7 +92,7 @@ class Application(Flask):
         # Initialize timed rotating file logger handler
         if int(self.config.get('LOG_FILES_ENABLED', '1')):
             makedirs(self.log_path, 0o755, True)
-            log_path = path_join(self.log_path, 'ampho.log')
+            log_path = path.join(self.log_path, 'ampho.log')
             default_fmt = '%(asctime)s] %(levelname)s: %(message)s'
             log_format = self.config.get('LOG_FILES_MSG_FORMAT', default_fmt)
             backup_count = int(self.config.get('LOG_FILES_BACKUP_COUNT', 30))
@@ -93,12 +100,12 @@ class Application(Flask):
             t_handler.setFormatter(logging.Formatter(log_format))
             logging.getLogger().addHandler(t_handler)
 
-        # Bundles to load
-        bundles = (bundles or []) + self.config.get('BUNDLES', [])
-
         # Let derived class to perform setup
-        if bundles:
-            self.on_init(bundles)
+        self.on_init()
+
+        # Register and load application bundle
+        self.register_bundle(self._entry_bundle_name, True)
+        self.load_bundle(self._entry_bundle_name, True)
 
         # Minify output in production mode
         if not self.debug:
@@ -123,7 +130,7 @@ class Application(Flask):
     def log_path(self) -> str:
         """Get log directory path
         """
-        return path_join(self.root_path, self.config.get('LOG_FILES_PATH', 'log'))  # type: ignore
+        return path.join(self.root_path, self.config.get('LOG_FILES_PATH', 'log'))  # type: ignore
 
     @property
     def bundles(self) -> Mapping[str, Bundle]:
@@ -141,18 +148,9 @@ class Application(Flask):
         """
         return copy(self._bundles_by_path)
 
-    def on_init(self, bundles: List[str]):
+    def on_init(self):
         """This method should be used to perform necessary application setup instead of overriding __init__().
-
-        :param List[str] bundles: names of bundle modules which should be registered and loaded at application start.
         """
-        # Register bundles
-        for name in bundles:
-            self.register_bundle(name, True)
-
-        # Initialize bundles
-        for name in bundles:
-            self.load_bundle(name, True)
 
     def get_bundle(self, name: str) -> Bundle:
         """Get a bundle by name
@@ -167,7 +165,7 @@ class Application(Flask):
 
         raise BundleNotRegisteredError(name)
 
-    def register_bundle(self, name: str, skip_registered: bool = False) -> Bundle:
+    def register_bundle(self, name: str, ignore_registered: bool = False) -> Bundle:
         """Register a bundle
 
         :param str name: bundle name
@@ -178,7 +176,7 @@ class Application(Flask):
         """
         # Bundle must not be registered more than once
         if name in self._bundles:
-            if skip_registered:
+            if ignore_registered:
                 return self._bundles[name]
 
             raise BundleAlreadyRegisteredError(name)
@@ -190,7 +188,7 @@ class Application(Flask):
 
         # Register dependencies
         for req in bundle.requires:
-            self.register_bundle(req, skip_registered)
+            self.register_bundle(req, ignore_registered)
 
         # Finish bundle registration
         bundle.register()
@@ -201,7 +199,7 @@ class Application(Flask):
 
         return bundle
 
-    def load_bundle(self, name: str, skip_loaded: bool = False) -> Bundle:
+    def load_bundle(self, name: str, ignore_loaded: bool = False) -> Bundle:
         """Load a bundle
 
         :param str name: bundle name.
@@ -220,7 +218,7 @@ class Application(Flask):
 
         # Bundles must not be loaded more than once
         if bundle.is_loaded:
-            if skip_loaded:
+            if ignore_loaded:
                 return bundle
             raise BundleAlreadyLoadedError(name)
 
@@ -230,7 +228,7 @@ class Application(Flask):
         try:
             # Load dependencies
             for req_name in bundle.requires:
-                self.load_bundle(req_name, skip_loaded)
+                self.load_bundle(req_name, ignore_loaded)
 
             # Load the bundle
             bundle.load(self)

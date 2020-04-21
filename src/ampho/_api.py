@@ -1,6 +1,6 @@
 """Ampho API Functions
 """
-__author__ = 'Oleksandr Shepetko'
+__author__ = 'Alexander Shepetko'
 __email__ = 'a@shepetko.com'
 __license__ = 'MIT'
 
@@ -12,10 +12,10 @@ from ._bundle import Bundle
 
 # Following variables are used just for type hinting purposes
 current_app = _c_app  # type: ignore
-request = _req  # type: Request
+request: Request = _req
 
 # Cache for get_caller_bundle()
-_FILE2BUNDLE = {}  # type: Dict[str, Bundle]
+_FILE2BUNDLE: Dict[str, Bundle] = {}
 
 
 def get_caller_bundle(skip_frames: int = 1) -> Bundle:

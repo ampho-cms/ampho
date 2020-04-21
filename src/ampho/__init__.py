@@ -1,7 +1,7 @@
 """Ampho Init
 """
 __description__ = 'Ampho is a Python library that provides simple and convenient way to develop Flask applications'
-__author__ = 'Oleksandr Shepetko'
+__author__ = 'Alexander Shepetko'
 __email__ = 'a@shepetko.com'
 __license__ = 'MIT'
 __version__ = '0.2'

@@ -1,6 +1,6 @@
 """Ampho Bundle Tests
 """
-__author__ = 'Oleksandr Shepetko'
+__author__ = 'Alexander Shepetko'
 __email__ = 'a@shepetko.com'
 __license__ = 'MIT'
 
@@ -14,7 +14,12 @@ from ampho.errors import BundleImportError, BundleAlreadyRegisteredError, Bundle
 
 
 class TestBundle(AmphoApplicationTestCase):
+    """Ampho Bundle Tests
+    """
+
     def test_bundle(self, tmp_path: str):
+        """Bundle test cases
+        """
         app = self.rand_app(tmp_path)
 
         # Create a bundle
@@ -62,6 +67,8 @@ class TestBundle(AmphoApplicationTestCase):
         assert bundle.res_path(r_str) == path_join(bundle.res_dir, r_str)
 
     def test_bundle_circular_dependency(self, tmp_path: str):
+        """Bundle circular dependency test case
+        """
         app = self.rand_app(tmp_path)
         b_name_1 = self.rand_str()
         b_name_2 = self.rand_str()

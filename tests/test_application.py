@@ -1,17 +1,36 @@
 """Ampho Application Tests
 """
-__author__ = 'Oleksandr Shepetko'
+__author__ = 'Alexander Shepetko'
 __email__ = 'a@shepetko.com'
 __license__ = 'MIT'
 
 import pytest
+from os import path
 from ampho.testing import AmphoApplicationTestCase
 from ampho.errors import BundleAlreadyRegisteredError, BundleNotRegisteredError, BundleAlreadyLoadedError, \
     BundleNotLoadedError
 
 
 class TestApplication(AmphoApplicationTestCase):
+    """Ampho Application Tests
+    """
+
+    def test_application(self, tmp_path: str):
+        """Application instantiation test case
+        """
+        app = self.rand_app(tmp_path)
+
+        assert app.tmp_path == path.join(tmp_path, 'tmp')
+
+    def test_non_existent_entry_bundle(self, tmp_path: str):
+        """Application instantiation test case using non-existent entry bundle
+        """
+        with pytest.raises(ImportError):
+            self.rand_app(tmp_path, entry_bundle_name=self.rand_str())
+
     def test_bundle_register(self, tmp_path: str):
+        """Bundle registration test case
+        """
         app = self.rand_app(tmp_path)
 
         b_name = self.rand_bundle(tmp_path)
@@ -26,6 +45,8 @@ class TestApplication(AmphoApplicationTestCase):
             app.register_bundle(b_name)
 
     def test_bundle_load(self, tmp_path: str):
+        """Bundle loading test case
+        """
         app = self.rand_app(tmp_path)
 
         # Create and register a bundle
@@ -54,6 +75,8 @@ class TestApplication(AmphoApplicationTestCase):
         assert app.load_bundle(bundle_name, True) is bundle
 
     def test_bundle_methods(self, tmp_path: str):
+        """Bundle methods test case
+        """
         app = self.rand_app(tmp_path)
         bundle = app.load_bundle(app.register_bundle(self.rand_bundle(tmp_path)).name)
 
@@ -62,6 +85,8 @@ class TestApplication(AmphoApplicationTestCase):
         assert bundle.render(bundle.name + '.jinja2', some_variable=bundle.name) == bundle.name
 
     def test_request(self, tmp_path: str):
+        """Bundle HTTP request test case
+        """
         client = self.rand_app(tmp_path, [self.rand_bundle(tmp_path)]).test_client()
         r_str = self.rand_str()
 

@@ -1,7 +1,7 @@
 #!/bin/env python
 """Ampho setup.py
 """
-__author__ = 'Oleksandr Shepetko'
+__author__ = 'Alexander Shepetko'
 __email__ = 'a@shepetko.com'
 __license__ = 'MIT'
 
@@ -17,11 +17,11 @@ with io.open('README.rst', 'rt') as f:
 
 with io.open(f'src/{PKG_NAME.replace("-", "_")}/__init__.py', 'rt') as f:
     content = f.read()
-    description = re.search(r"__description__ = '(.*?)'", content).group(1)
-    author = re.search(r"__author__ = '(.*?)'", content).group(1)
-    author_email = re.search(r"__email__ = '(.*?)'", content).group(1)
-    lic = re.search(r"__license__ = '(.*?)'", content).group(1)
-    version = re.search(r"__version__ = '(.*?)'", content).group(1)
+    description = re.search(r"__description__ = '(.*?)'", content).group(1)  # type: ignore
+    author = re.search(r"__author__ = '(.*?)'", content).group(1)  # type: ignore
+    author_email = re.search(r"__email__ = '(.*?)'", content).group(1)  # type: ignore
+    lic = re.search(r"__license__ = '(.*?)'", content).group(1)  # type: ignore
+    version = re.search(r"__version__ = '(.*?)'", content).group(1)  # type: ignore
 
 setup(
     name=PKG_NAME,
@@ -66,7 +66,7 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            'ampho = ampho.application:main'
+            'ampho = ampho.main:main'
         ]
     },
 )

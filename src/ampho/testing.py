@@ -1,6 +1,6 @@
 """Ampho Base Test Case
 """
-__author__ = 'Oleksandr Shepetko'
+__author__ = 'Alexander Shepetko'
 __email__ = 'a@shepetko.com'
 __license__ = 'MIT'
 
@@ -101,21 +101,30 @@ class AmphoApplicationTestCase:
 
         return name
 
-    def rand_app(self, tmp_path: str, requirements: List[str] = None):
-        """Create an Ampho application
+    def rand_app(self, tmp_path: str, requires: List[str] = None, config: dict = None, entry_bundle_name: str = None):
+        """Create a random Ampho application
         """
+        # Create application bundle
+        if entry_bundle_name is None:
+            entry_bundle_name = self.rand_str()
+            self.rand_bundle(tmp_path, requires, entry_bundle_name)
+
+        # Set entry bundle name
+        os.environ['AMPHO_ENTRY'] = entry_bundle_name
+
         # Create instance dir
         instance_dir = os.path.join(tmp_path, 'instance')
         os.mkdir(instance_dir)
 
         # Create configuration
         config_path = os.path.join(instance_dir, os.getenv('FLASK_ENV', 'production')) + '.json'
-        config = {
+        config_content = config or {}  # type: dict
+        config_content.update({
             'TESTING': True,
             self.rand_str().upper(): self.rand_str(),
-        }
+        })
         with open(config_path, 'wt') as f:
-            json.dump(config, f)
+            json.dump(config_content, f)
 
         # Create application instance
-        return Application(requirements, root_path=tmp_path)
+        return Application()

@@ -8,6 +8,7 @@ exclude_lines =
     raise AssertionError
     raise NotImplementedError
 
+[run]
 omit =
-    src/ampho/__main__.py
-    src/ampho/_cli.py
+    */__main__.py
+    */main.py
