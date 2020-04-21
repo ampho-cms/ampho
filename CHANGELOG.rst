@@ -1,6 +1,13 @@
 Ampho Changelog
 ===============
 
+Version 0.3
+-----------
+
+- Concept of entry bundle introduced.
+- ``testing.rand_app()`` got two new arguments: ``config`` and ``entry_bundle_name``.
+
+
 Version 0.2
 -----------
 
