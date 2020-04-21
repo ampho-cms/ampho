@@ -29,7 +29,7 @@ setup(
     url=f'https://github.com/{GITHUB_USER}/{PKG_NAME}',
     project_urls={
         'Code': f'https://github.com/{GITHUB_USER}/{PKG_NAME}',
-        'Documentation': f'https://github.com/{GITHUB_USER}}/{PKG_NAME}/blob/master/doc/index.rst',
+        'Documentation': f'https://github.com/{GITHUB_USER}/{PKG_NAME}/blob/master/doc/index.rst',
         'Issue tracker': f'https://github.com/{GITHUB_USER}/{PKG_NAME}/issues',
     },
     license=lic,
