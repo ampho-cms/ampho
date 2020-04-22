@@ -39,19 +39,15 @@ class Bundle:
         """
         # Import bundle's module
         try:
-            # Bundle's cached module should be ignored to make some testing cases possible
-            if name in sys.modules:
-                del sys.modules[name]
-
             self._module = module = import_module(name)
-        except ImportError:
+        except ImportError as e:
             raise BundleImportError(name)
 
         # Bundle's name
         self._name = name
 
         # Bundle dependencies
-        self._requires = tuple(kwargs.get('requires', getattr(module, 'BUNDLE_REQUIRES', ())))
+        self._requires = tuple(kwargs.get('requires', getattr(module, 'REQUIRES', ())))
 
         # Bundle's bound application
         self._app = None

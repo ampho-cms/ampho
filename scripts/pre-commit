@@ -5,5 +5,5 @@ set -e
 pylint src
 mypy src
 bandit -c .bandit.yml -r src
-doc8 src/ampho
+doc8 src
 tox

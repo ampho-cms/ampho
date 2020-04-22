@@ -137,12 +137,12 @@ Bundle requirements
 -------------------
 
 A bundle can depend on other bundles. In that case it is important, that required bundles be properly loaded and
-initialized before dependant bundle. To define requirements for your bundle, use ``BUNDLE_REQUIRES`` list or tuple of
+initialized before dependant bundle. To define requirements for your bundle, use ``REQUIRES`` list or tuple of
 strings property in bundle's ``__init__.py``, i. e.:
 
 .. sourcecode:: python
 
-    BUNDLE_REQUIRES = ('ampho_locale', 'ampho_db')
+    REQUIRES = ('ampho_locale', 'ampho_db')
 
 
 Application configuration
@@ -292,14 +292,14 @@ Application Context
 -------------------
 
 When you use pure Flask, you create application object by yourself. But when you use Ampho, this object created by Ampho
-for you. To access this object use ``ampho.app`` attribute, i. e.:
+for you. To access this object use ``ampho.current_app`` attribute, i. e.:
 
 .. sourcecode:: python
 
-    from ampho import app
+    from ampho import current_app
     from flask.logging import default_handler
 
-    app.logger.removeHandler(default_handler)
+    current_app.logger.removeHandler(default_handler)
 
 
 Logging

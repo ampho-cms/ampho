@@ -5,6 +5,7 @@ __email__ = 'a@shepetko.com'
 __license__ = 'MIT'
 
 import pytest
+from pathlib import Path
 from os import path
 from ampho.testing import AmphoApplicationTestCase
 from ampho.errors import BundleAlreadyRegisteredError, BundleNotRegisteredError, BundleAlreadyLoadedError, \
@@ -15,20 +16,20 @@ class TestApplication(AmphoApplicationTestCase):
     """Ampho Application Tests
     """
 
-    def test_application(self, tmp_path: str):
+    def test_application(self, tmp_path: Path):
         """Application instantiation test case
         """
         app = self.rand_app(tmp_path)
 
         assert app.tmp_path == path.join(tmp_path, 'tmp')
 
-    def test_non_existent_entry_bundle(self, tmp_path: str):
+    def test_non_existent_entry_bundle(self, tmp_path: Path):
         """Application instantiation test case using non-existent entry bundle
         """
         with pytest.raises(ImportError):
             self.rand_app(tmp_path, entry_bundle_name=self.rand_str())
 
-    def test_bundle_register(self, tmp_path: str):
+    def test_bundle_register(self, tmp_path: Path):
         """Bundle registration test case
         """
         app = self.rand_app(tmp_path)
@@ -44,7 +45,7 @@ class TestApplication(AmphoApplicationTestCase):
         with pytest.raises(BundleAlreadyRegisteredError):
             app.register_bundle(b_name)
 
-    def test_bundle_load(self, tmp_path: str):
+    def test_bundle_load(self, tmp_path: Path):
         """Bundle loading test case
         """
         app = self.rand_app(tmp_path)
@@ -74,7 +75,7 @@ class TestApplication(AmphoApplicationTestCase):
         # Load the same bundle, but without exception
         assert app.load_bundle(bundle_name, True) is bundle
 
-    def test_bundle_methods(self, tmp_path: str):
+    def test_bundle_methods(self, tmp_path: Path):
         """Bundle methods test case
         """
         app = self.rand_app(tmp_path)
@@ -84,7 +85,7 @@ class TestApplication(AmphoApplicationTestCase):
         # Both template name and that string equal to the bundle's name.
         assert bundle.render(bundle.name + '.jinja2', some_variable=bundle.name) == bundle.name
 
-    def test_request(self, tmp_path: str):
+    def test_request(self, tmp_path: Path):
         """Bundle HTTP request test case
         """
         client = self.rand_app(tmp_path, [self.rand_bundle(tmp_path)]).test_client()

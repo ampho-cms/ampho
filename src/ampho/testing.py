@@ -4,12 +4,14 @@ __author__ = 'Alexander Shepetko'
 __email__ = 'a@shepetko.com'
 __license__ = 'MIT'
 
+import importlib
 import string
 import random
 import sys
 import os
 import json
 from typing import List
+from pathlib import Path
 from ._application import Application
 
 
@@ -37,13 +39,13 @@ class AmphoApplicationTestCase:
         """
         return ''.join(random.choice(string.ascii_lowercase) for _ in range(n_chars))
 
-    def rand_bundle(self, tmp_path: str, requires: List[str] = None, name: str = None,
+    def rand_bundle(self, tmp_path: Path, requires: List[str] = None, name: str = None,
                     on_register: str = '    pass', on_load: str = '    pass',
                     append_init: str = '', append_views: str = '', append_commands: str = '') -> str:
         """Create a random bundle
         """
         # Add tmp_path to search path to allow import modules from there
-        if tmp_path not in sys.path:
+        if str(tmp_path) not in sys.path:
             sys.path.append(str(tmp_path))
 
         name = name or self.rand_str()
@@ -51,7 +53,7 @@ class AmphoApplicationTestCase:
         requires_str = ', '.join([f'"{b_name}"' for b_name in requires or []])
 
         self._create_package(pkg_path, (
-            f'BUNDLE_REQUIRES = [{requires_str}]\n\n'
+            f'REQUIRES = [{requires_str}]\n\n'
             'def on_register():\n'
             f'{on_register}\n\n'
             'def on_load():\n'
@@ -99,9 +101,12 @@ class AmphoApplicationTestCase:
         with open(os.path.join(tpl_d_path, name + '.jinja2'), 'wt') as f:
             f.write('{{some_variable}}')
 
+        # Invalidate import caches to guarantee on-the-fly created bundle be loaded
+        importlib.invalidate_caches()
+
         return name
 
-    def rand_app(self, tmp_path: str, requires: List[str] = None, config: dict = None, entry_bundle_name: str = None):
+    def rand_app(self, tmp_path: Path, requires: List[str] = None, config: dict = None, entry_bundle_name: str = None):
         """Create a random Ampho application
         """
         # Create application bundle

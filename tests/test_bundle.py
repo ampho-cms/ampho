@@ -4,9 +4,10 @@ __author__ = 'Alexander Shepetko'
 __email__ = 'a@shepetko.com'
 __license__ = 'MIT'
 
-from os.path import join as path_join
 import pytest
 from types import ModuleType
+from pathlib import Path
+from os.path import join as path_join
 from flask import Blueprint
 from ampho import Bundle
 from ampho.testing import AmphoApplicationTestCase
@@ -17,9 +18,10 @@ class TestBundle(AmphoApplicationTestCase):
     """Ampho Bundle Tests
     """
 
-    def test_bundle(self, tmp_path: str):
+    def test_bundle(self, tmp_path: Path):
         """Bundle test cases
         """
+        # Create an application structure
         app = self.rand_app(tmp_path)
 
         # Create a bundle
@@ -66,7 +68,7 @@ class TestBundle(AmphoApplicationTestCase):
         r_str = self.rand_str()
         assert bundle.res_path(r_str) == path_join(bundle.res_dir, r_str)
 
-    def test_bundle_circular_dependency(self, tmp_path: str):
+    def test_bundle_circular_dependency(self, tmp_path: Path):
         """Bundle circular dependency test case
         """
         app = self.rand_app(tmp_path)
@@ -88,7 +90,7 @@ class TestBundle(AmphoApplicationTestCase):
         with pytest.raises(BundleCircularDependencyError):
             app.load_bundle(b_name_2)
 
-    def test_render(self, tmp_path: str):
+    def test_render(self, tmp_path: Path):
         """Test bundle's render method
         """
         app = self.rand_app(tmp_path, [self.rand_bundle(tmp_path)])
