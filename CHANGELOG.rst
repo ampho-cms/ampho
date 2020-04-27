@@ -1,8 +1,10 @@
 Ampho Changelog
 ===============
 
-Version 0.3
------------
+Version 0.4 (2020-04-27)
+------------------------
+
+- ```BUNDLE_REQUIRES`` constant renamed to ``REQUIRES``.
 
 
 Version 0.3 (2020-04-22)
@@ -24,6 +26,6 @@ Version 0.2 (2020-02-15)
 
 
 Version 0.1 (2020-01-11)
------------
+------------------------
 
 First public preview release.

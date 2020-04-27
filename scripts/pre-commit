@@ -6,4 +6,4 @@ pylint src
 mypy src
 bandit -c .bandit.yml -r src
 doc8 src
-tox
+tox -r

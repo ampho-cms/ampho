@@ -8,10 +8,11 @@ import inspect as _inspect
 from typing import Dict
 from os import path
 from flask import Request, current_app as _c_app, request as _req, g as _g
+from ._application import Application
 from ._bundle import Bundle
 
 # Following variables are used just for type hinting purposes
-current_app = _c_app  # type: ignore
+current_app: Application = _c_app  # type: ignore
 request: Request = _req
 
 # Cache for get_caller_bundle()
