@@ -4,7 +4,7 @@ __description__ = 'Ampho is a Python library that provides simple and convenient
 __author__ = 'Alexander Shepetko'
 __email__ = 'a@shepetko.com'
 __license__ = 'MIT'
-__version__ = '0.3'
+__version__ = '0.4'
 
 # Public API
 from ._api import current_app, get_caller_bundle, request, route, render

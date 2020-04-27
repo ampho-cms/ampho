@@ -1,6 +1,8 @@
 Ampho User Manual
 =================
 
+What is Ampho
+-------------
 **Ampho** is a Python library that provides simple and convenient way to develop applications by splitting them into
 small, easily maintainable parts called *"bundles"*.
 
@@ -14,7 +16,6 @@ command or your favorite application server like `uWSGI`_ or `Gunicorn`_.
 
 Installation
 ------------
-
 To install latest version of the Ampho, use one simple command:
 
 .. sourcecode:: text
@@ -24,16 +25,14 @@ To install latest version of the Ampho, use one simple command:
 
 Ampho and Flask
 ---------------
-
-It is important to notice again, that Ampho is **not** a standalone framework. It should be considered as a helper
-library, that may help make development process of Flask applications a little bit easier. It means that you don't have
-to change your development workflow significantly, as well as you don't have to learn new concepts besides couple ones,
-which are described in this document. For all other information please check Flask's official documentation.
+It is important to notice, that Ampho is **not** a standalone framework. It should be considered as a helper library,
+that may help make development process of Flask applications a little bit easier. It means that you don't have to change
+your development workflow significantly, as well as you don't have to learn new concepts besides couple ones, which are
+described in this document. For all other information please check Flask's official documentation.
 
 
 What is a bundle
 ----------------
-
 Technically bundle is a regular Python package. The main purpose of bundles is reducing developers efforts by
 splitting application into small and maintainable parts. Bundle is like `Flask blueprint`_ with slightly improved
 functionality.
@@ -49,7 +48,6 @@ valid Python package name is suitable.
 
 Bootstrap bundle
 ----------------
-
 When Ampho starts it needs to know what to do after initialization. Because any Ampho application are splitted into
 bundles, it's obviously that a some "special" bootstrap bundle should exist, allowing Ampho to boot it at first. Usually
 it's not necessary to specify that bundle name manually, because Ampho searches for a bundle named ``app`` and uses it
@@ -59,7 +57,6 @@ that using environment variable ``AMPHO_ENTRY``.
 
 Root Directory
 --------------
-
 Despite almost any modern web application usually consists of many parts, it's a good practice to retain all that parts
 under a single location on the filesystem, called **root directory**. Ampho automatically selects parent directory of
 the bootstrap bundle as a root one.
@@ -67,7 +64,6 @@ the bootstrap bundle as a root one.
 
 Instance directory
 ------------------
-
 As you may know, Flask has a concept of `instance directory <https://flask.palletsprojects.com/en/master/config/
 #instance-folders>`_. Unlike Flask, Ampho automatically creates the application object and configures location of the
 instance directory, which is by default located at ``${root_dir}/instance``. You don't have to create this directory
@@ -76,7 +72,6 @@ manually, it'll be created by Ampho automatically at start time.
 
 Creating a bundle
 -----------------
-
 To create a bundle you just need to create a regular python package which can be properly imported afterwards. Let's
 assume you use directory structure mentioned above, so after creating the ``app`` package in the root directory, you'll
 have following files layout:
@@ -94,7 +89,6 @@ is already enough to start the application.
 
 Start the application
 ---------------------
-
 Now, when you have at least one bundle, you can start Ampho application:
 
 .. sourcecode:: text
@@ -118,7 +112,6 @@ As you can notice, starting an Ampho application is almost the same as starting 
 
 Bundle initialization process
 -----------------------------
-
 When Ampho loads a bundle, it does this operation in two steps. At first, bundle is registered, and then it is loaded.
 If you need to perform actions during bundle registration, you should define ``on_register()`` hook function in the
 bundle module's ``__init__.py`` code and it'll be called automatically by Ampho. Similarly, you may define ``on_load()``
@@ -135,7 +128,6 @@ function, if you need actions to be performed at bundle loading time.
 
 Bundle requirements
 -------------------
-
 A bundle can depend on other bundles. In that case it is important, that required bundles be properly loaded and
 initialized before dependant bundle. To define requirements for your bundle, use ``REQUIRES`` list or tuple of
 strings property in bundle's ``__init__.py``, i. e.:
@@ -147,7 +139,6 @@ strings property in bundle's ``__init__.py``, i. e.:
 
 Application configuration
 -------------------------
-
 Ampho applications are configured the same way as `Flask ones <https://flask.palletsprojects.com/en/master/config/>`_.
 In addition to Flask' configuration mechanism, Ampho provides another convenient way to handle and distribute
 application's configuration using JSON files with pre-defined names, located in the `instance directory`_.
@@ -182,7 +173,6 @@ configuration set automatically depending on environment where application runs.
 
 Routing
 -------
-
 In general it doesn't matter where exactly views code is located, but Ampho proposes a convenient way to organize
 views and map them to URLs.
 
@@ -227,7 +217,6 @@ For all other aspects of working with routing, please refer to the `Flask routin
 
 Template rendering
 ------------------
-
 Template rendering in Ampho works almost the same way as in Flask, except two moments:
 
 #. Template files should be located inside the ``tpl`` directory of the bundle.
@@ -238,7 +227,6 @@ Template rendering in Ampho works almost the same way as in Flask, except two mo
 
 CLI commands
 ------------
-
 In general it doesn't matter where exactly CLI commands code is located, but Ampho proposes a convenient to organize
 commands code by placing them into separate module named ``commands``.
 
@@ -290,7 +278,6 @@ For all other aspects of working with CLI commands, please refer to the `Flask C
 
 Application Context
 -------------------
-
 When you use pure Flask, you create application object by yourself. But when you use Ampho, this object created by Ampho
 for you. To access this object use ``ampho.current_app`` attribute, i. e.:
 
@@ -304,7 +291,6 @@ for you. To access this object use ``ampho.current_app`` attribute, i. e.:
 
 Logging
 -------
-
 If ``FLASK_ENV`` configuration parameter is ``development`` or ``FLASK_DEBUG`` is ``1``, logging level automatically
 is set to ``DEBUG``.
 
@@ -319,9 +305,8 @@ configuration parameter.
 Number of retained files is controlled via ``LOG_FILES_BACKUP_COUNT`` configuration parameter.
 
 
-Deploying
----------
-
+Deployment
+----------
 Generally deploying Ampho application to a web server is the same as `deploying a Flask application`_.
 
 One thing should be noted, that when `deploying to a uWSGI server`_, the ``ampho.main`` module name should be
