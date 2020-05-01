@@ -2,8 +2,8 @@
 
 set -e
 
-pylint src
-mypy src
+pylint src tests
+mypy src tests
 bandit -c .bandit.yml -r src
-doc8 src
+doc8
 tox -r

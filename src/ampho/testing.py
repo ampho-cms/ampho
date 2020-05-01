@@ -10,21 +10,61 @@ import random
 import sys
 import os
 import json
-from typing import List
-from pathlib import Path
+from typing import Optional, List
+from tempfile import mkdtemp
+from shutil import rmtree
 from ._application import Application
+from ._bundle import Bundle
 
 
 class AmphoApplicationTestCase:
     """Base Ampho application test case
     """
+    # Path to test case temporary directory
+    tmp_dir: Optional[str] = None
+
+    # Test case application
+    app: Optional[Application] = None
+
+    # Test case entry bundle
+    entry_bundle: Optional[Bundle] = None
+
+    # Entry bundle requirements
+    ENTRY_BUNDLE_REQUIRES: List[str] = []
+
+    # Should created temporary directories be removed at teardown
+    RM_TMP_DIRS: bool = True
+
+    # Created temporary directories during a testing session
+    _TMP_DIRS: List[str] = []
+
+    @classmethod
+    def setup_class(cls):
+        """Class setup fixture
+        """
+        cls.tmp_dir = cls.make_tmp_dir()
+
+        entry_bundle_name = cls.rand_bundle_struct(cls.tmp_dir, cls.ENTRY_BUNDLE_REQUIRES)
+        os.environ['AMPHO_ENTRY'] = entry_bundle_name
+
+        cls.app = cls.rand_app()
+        cls.entry_bundle = cls.app.get_bundle(entry_bundle_name)
+        cls.cli_runner = cls.app.test_cli_runner()
+
+    @classmethod
+    def teardown_class(cls):
+        """Class teardown fixture
+        """
+        if cls.RM_TMP_DIRS:
+            for D in cls._TMP_DIRS:
+                rmtree(D, True)
 
     @staticmethod
-    def _create_package(pkg_dir_path, content: str = ''):
+    def _create_package(dir_path, content: str = ''):
         """Create a Python package
         """
-        os.mkdir(pkg_dir_path)
-        with open(os.path.join(pkg_dir_path, '__init__.py'), 'wt') as f:
+        os.mkdir(dir_path)
+        with open(os.path.join(dir_path, '__init__.py'), 'wt') as f:
             f.write(content)
 
     @staticmethod
@@ -39,20 +79,34 @@ class AmphoApplicationTestCase:
         """
         return ''.join(random.choice(string.ascii_lowercase) for _ in range(n_chars))
 
-    def rand_bundle(self, tmp_path: Path, requires: List[str] = None, name: str = None,
-                    on_register: str = '    pass', on_load: str = '    pass',
-                    append_init: str = '', append_views: str = '', append_commands: str = '') -> str:
-        """Create a random bundle
+    @classmethod
+    def make_tmp_dir(cls) -> str:
+        """Yes, I know about tmp_path fixture existence.
+        This method is aimed to be used in class setup/teardown methods.
         """
-        # Add tmp_path to search path to allow import modules from there
-        if str(tmp_path) not in sys.path:
-            sys.path.append(str(tmp_path))
+        d_path = mkdtemp(prefix='ampho-test-')
+        cls._TMP_DIRS.append(d_path)
 
-        name = name or self.rand_str()
-        pkg_path = os.path.join(tmp_path, name)
+        return d_path
+
+    @classmethod
+    def rand_bundle_struct(cls, tmp_dir: str = None, requires: List[str] = None, name: str = None,
+                           on_register: str = '    pass', on_load: str = '    pass',
+                           append_init: str = '', append_views: str = '', append_commands: str = '') -> str:
+        """Create a random bundle structure
+        """
+        if not tmp_dir:
+            tmp_dir = cls.tmp_dir
+
+        # Add tmp_dir to search path to allow import modules from there
+        if str(tmp_dir) not in sys.path:
+            sys.path.append(str(tmp_dir))
+
+        name = name or cls.rand_str()
+        pkg_path = os.path.join(tmp_dir, name)  # type: ignore
         requires_str = ', '.join([f'"{b_name}"' for b_name in requires or []])
 
-        self._create_package(pkg_path, (
+        cls._create_package(pkg_path, (
             f'REQUIRES = [{requires_str}]\n\n'
             'def on_register():\n'
             f'{on_register}\n\n'
@@ -62,7 +116,7 @@ class AmphoApplicationTestCase:
         ))
 
         # Create views module
-        view_name = self.rand_str()
+        view_name = cls.rand_str()
         with open(os.path.join(pkg_path, 'views.py'), 'wt') as f:
             f.write(
                 'from ampho import route, render\n\n'
@@ -73,7 +127,7 @@ class AmphoApplicationTestCase:
             )
 
         # Create commands module
-        command_name = self.rand_str()
+        command_name = cls.rand_str()
         with open(os.path.join(pkg_path, 'commands.py'), 'wt') as f:
             f.write(
                 'from ampho import cli\n\n'
@@ -106,30 +160,26 @@ class AmphoApplicationTestCase:
 
         return name
 
-    def rand_app(self, tmp_path: Path, requires: List[str] = None, config: dict = None, entry_bundle_name: str = None):
+    @classmethod
+    def rand_app(cls, config: dict = None, tmp_dir: str = None, **kwargs):
         """Create a random Ampho application
         """
-        # Create application bundle
-        if entry_bundle_name is None:
-            entry_bundle_name = self.rand_str()
-            self.rand_bundle(tmp_path, requires, entry_bundle_name)
-
-        # Set entry bundle name
-        os.environ['AMPHO_ENTRY'] = entry_bundle_name
+        # Ensure path to tmp dir
+        if not tmp_dir:
+            tmp_dir = cls.tmp_dir
 
         # Create instance dir
-        instance_dir = os.path.join(tmp_path, 'instance')
+        instance_dir = os.path.join(tmp_dir, 'instance')  # type: ignore
         os.mkdir(instance_dir)
 
         # Create configuration
         config_path = os.path.join(instance_dir, os.getenv('FLASK_ENV', 'production')) + '.json'
-        config_content = config or {}  # type: dict
+        config_content = config or {}
         config_content.update({
             'TESTING': True,
-            self.rand_str().upper(): self.rand_str(),
         })
         with open(config_path, 'wt') as f:
             json.dump(config_content, f)
 
         # Create application instance
-        return Application()
+        return Application(**kwargs)

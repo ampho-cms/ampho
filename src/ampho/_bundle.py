@@ -12,7 +12,7 @@ from importlib import import_module
 from os.path import join as path_join, dirname, basename, abspath
 from flask import Blueprint, render_template
 from flask.cli import AppGroup
-from .errors import BundleImportError, BundleNotLoadedError, BundleAlreadyLoadedError
+from .errors import BundleImportError, BundleAlreadyImportedError, BundleNotLoadedError, BundleAlreadyLoadedError
 
 
 class Bundle:
@@ -37,6 +37,10 @@ class Bundle:
     def __init__(self, name: str, **kwargs):
         """Init
         """
+        # This check allows to catch some unexpected usage patterns
+        if name in sys.modules:
+            raise BundleAlreadyImportedError(name)
+
         # Import bundle's module
         try:
             self._module = module = import_module(name)
@@ -229,11 +233,6 @@ class Bundle:
                 # Import submodule within bundle context
                 with self._app.app_context() as ctx:
                     submodule_abs_name = f'{self._name}.{sub_name}'
-
-                    # Bundle's cached submodule should be ignored to make some testing cases possible
-                    if submodule_abs_name in sys.modules:
-                        del sys.modules[submodule_abs_name]
-
                     ctx.g.current_bundle = self  # Make current bundle accessible in the currently imported module
                     module = import_module(submodule_abs_name)
                     logging.debug("Bundle's module imported: %s", submodule_abs_name)

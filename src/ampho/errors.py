@@ -29,6 +29,14 @@ class BundleImportError(BundleError):
         return f"Bundle's module '{self._name}' cannot be imported"
 
 
+class BundleAlreadyImportedError(BundleError):
+    """Error while importing bundle module more than once
+    """
+
+    def __str__(self) -> str:
+        return f"Bundle's module '{self._name}' is already imported"
+
+
 class BundleNotRegisteredError(BundleError):
     """Bundle with the specified name is not registered
     """

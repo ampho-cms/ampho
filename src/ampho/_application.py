@@ -16,7 +16,7 @@ from logging.handlers import TimedRotatingFileHandler
 from flask import Flask, Response
 from htmlmin import minify  # type: ignore
 from .errors import BundleNotRegisteredError, BundleAlreadyRegisteredError, BundleCircularDependencyError, \
-    BundleAlreadyLoadedError
+    BundleAlreadyLoadedError, BundleImportError
 from ._bundle import Bundle
 from .signals import bundle_registered
 
@@ -25,7 +25,7 @@ class Application(Flask):
     """The application object implements a WSGI application. Once it is created it will act as a central registry for
     view functions, URL rules and all other application's stuff.
 
-    :param List[str] bundles: names of bundle modules which should be registered and loaded at application start.
+    :param str entry_bundle: names of the entry bundle modules.
     :param str root_path: path to the root directory of the application.
     :param str instance_path: path to the instance directory of the application. Default is ``$root_path/instance``.
     :param str static_folder: path to the directory contains static files. default is ``$root_path/static``.
@@ -44,18 +44,17 @@ class Application(Flask):
         self._loading_bundles: List[str] = []
 
         # Application bundle package name
-        self._entry_bundle_name = getenv('AMPHO_ENTRY', 'app')
+        self._entry_bundle_name = getenv('AMPHO_ENTRY', kwargs.get('entry_bundle', 'app'))
 
         # Check for application bundle package existence
-        app_mod_info = pkgutil.get_loader(self._entry_bundle_name)
-        if not app_mod_info:
-            raise ImportError("Package '{}' is not found."
-                              "Use AMPHO_ENTRY environment variable "
-                              "to specify another package name.".format(self._entry_bundle_name))
+        entry_b_mod_info = pkgutil.get_loader(self._entry_bundle_name)
+        if not entry_b_mod_info:
+            raise BundleImportError("Package '{}' is not found. Use the AMPHO_ENTRY environment variable "
+                                    "to specify another package name.".format(self._entry_bundle_name))
 
         # Application's root dir path
         if 'root_path' not in kwargs:
-            kwargs['root_path'] = path.abspath(path.join(path.dirname(getattr(app_mod_info, 'path')), path.pardir))
+            kwargs['root_path'] = path.abspath(path.join(path.dirname(getattr(entry_b_mod_info, 'path')), path.pardir))
 
         # Construct instance path, because Flask constructs it in a wrong way in some cases
         if 'instance_path' not in kwargs:
@@ -169,7 +168,7 @@ class Application(Flask):
         """Register a bundle
 
         :param str name: bundle name
-        :param bool skip_registered: should already registered name be silently skipped
+        :param bool ignore_registered: should already registered name be silently skipped
         :returns: Bundle's instance.
         :rtype: Bundle
         :raises BundleAlreadyRegisteredError: if a bundle with the same name is already registered.
@@ -203,7 +202,7 @@ class Application(Flask):
         """Load a bundle
 
         :param str name: bundle name.
-        :param bool skip_loaded: don't raise :py:exc:`errors.BundleAlreadyLoadedError` in case if bundle with the same
+        :param bool ignore_loaded: don't raise :py:exc:`errors.BundleAlreadyLoadedError` in case if bundle with the same
             name is already registered.
         :returns: Bundle's instance.
         :rtype: Bundle
