@@ -34,7 +34,7 @@ def _init_config(app: Flask):
 
     for config_name in ('default', os.getenv('FLASK_ENV', ''), f'{getuser()}@{gethostname()}'):
         for ext in ('.py', '.json'):
-            config_path = path.join(app.instance_path, config_name) + ext
+            config_path = path.join(config_dir, config_name) + ext
             if not path.isfile(config_path):
                 continue
             if ext == '.json':
@@ -72,7 +72,7 @@ def _init_logging(app: Flask):
 def _init_db(app: Flask):
     """Initialize database
     """
-    uri = app.config.get('SQLALCHEMY_DATABASE_URI', '')  # type: str
+    uri = app.config.get('SQLALCHEMY_DATABASE_URI', 'sqlite:///$INSTANCE/db.sqlite')  # type: str
     if not uri:
         raise error.ConfigurationError('SQLALCHEMY_DATABASE_URI configuration parameter is empty')
 
