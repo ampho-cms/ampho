@@ -60,13 +60,5 @@ setup(
     python_requires='>=3.6',
     install_requires=[
         'flask==1.*',
-        'colorama==0.*',
-        'htmlmin==0.*',
-        'blinker==1.*',
     ],
-    entry_points={
-        'console_scripts': [
-            'ampho = ampho.main:main'
-        ]
-    },
 )

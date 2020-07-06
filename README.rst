@@ -1,8 +1,7 @@
 Ampho
 =====
 
-**Ampho** is a Python library that provides simple and convenient way to develop applications by splitting them into
-small, easily maintainable parts.
+**Ampho CMS** is a web content management system based on `Flask`_.
 
 Build status
 ------------
