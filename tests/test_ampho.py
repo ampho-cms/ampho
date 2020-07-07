@@ -7,7 +7,7 @@ __license__ = 'MIT'
 import pytest
 from os import PathLike, path
 from flask import Flask
-from ampho import ampho_init
+from flask_ampho import Ampho
 
 
 @pytest.fixture
@@ -16,4 +16,8 @@ def instance_path(tmp_path: PathLike) -> str:
 
 
 def test_ampho_init(instance_path: PathLike):
-    ampho_init(Flask(__name__, instance_path=instance_path))
+    app = Flask(__name__, instance_path=instance_path)
+    app.config.from_mapping({
+        'SQLALCHEMY_TRACK_MODIFICATIONS': False
+    })
+    Ampho()
