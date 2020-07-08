@@ -12,10 +12,14 @@ from flask_ampho import Ampho
 
 @pytest.fixture
 def instance_path(tmp_path: PathLike) -> str:
+    """Instance path fixture
+    """
     return path.join(tmp_path, 'instance')
 
 
 def test_ampho_init(instance_path: PathLike):
+    """Test init
+    """
     app = Flask(__name__, instance_path=instance_path)
     app.config.from_mapping({
         'SQLALCHEMY_DATABASE_URI': 'sqlite://',

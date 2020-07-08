@@ -9,13 +9,13 @@ import io
 import re
 from setuptools import find_packages, setup
 
-PKG_NAME = 'ampho'
+PKG_NAME = 'flask_ampho'
 GITHUB_USER = 'ampho-cms'
 
 with io.open('README.rst', 'rt') as f:
     readme = f.read()
 
-with io.open(f'src/flask_ampho/__init__.py', 'rt') as f:
+with io.open(f'src/{PKG_NAME.replace("-", "_")}/__init__.py', 'rt') as f:
     content = f.read()
     description = re.search(r"__description__ = '(.*?)'", content).group(1)  # type: ignore
     author = re.search(r"__author__ = '(.*?)'", content).group(1)  # type: ignore
@@ -60,7 +60,8 @@ setup(
     python_requires='>=3.6',
     install_requires=[
         'flask==1.*',
-        'flask-sqlalchemy==2.*',
         'flask-migrate==2.*',
+        'flask-restful==0.*',
+        'flask-sqlalchemy==2.*',
     ],
 )

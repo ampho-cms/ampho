@@ -7,11 +7,11 @@ Build status
 ------------
 
 .. image:: https://travis-ci.org/ampho-cms/ampho.svg?branch=develop
-    :target: https://travis-ci.org/ampho-cms/ampho
+    :target: https://travis-ci.org/ampho-cms/flask_ampho
     :alt: Build status
 
 .. image:: https://codecov.io/gh/ampho-cms/ampho/branch/develop/graph/badge.svg
-    :target: https://codecov.io/gh/ampho-cms/ampho
+    :target: https://codecov.io/gh/ampho-cms/flask_ampho
     :alt: Code coverage
 
 

@@ -13,21 +13,26 @@ from socket import gethostname
 from getpass import getuser
 from logging.handlers import TimedRotatingFileHandler
 from flask import Flask
+from flask.cli import AppGroup
 from flask_ampho import error
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
+from flask_restful import Api as RestfulApi
 
 
 class Ampho:
-    def __init__(self, app: Flask = None, db: SQLAlchemy = None, migrate: Migrate = None):
+    def __init__(self, app: Flask = None, db: SQLAlchemy = None, migrate: Migrate = None, restful: RestfulApi = None):
         """Init
         """
         self.app = app
         self.db = db
         self.migrate = migrate
+        self.restful = restful
+
+        self.cli_group = AppGroup('ampho')
+        app.cli.add_command(self.cli_group)
 
         self.root_path = path.dirname(__file__)
-        self.migrations_path = path.join(self.root_path, 'migrations')
 
         if app:
             self.init_app(app, db, migrate)
@@ -60,6 +65,10 @@ class Ampho:
     def _init_logging(self):
         """Init logging
         """
+        # Set default log leve;
+        if self.app.debug:
+            logging.getLogger().setLevel(logging.DEBUG)
+
         # Ensure log directory
         default_log_dir = path.abspath(path.join(self.app.instance_path, path.pardir, 'log'))
         log_dir = self.app.config.get('AMPHO_LOG_DIR')
@@ -85,34 +94,40 @@ class Ampho:
     def teardown(self, exception: Exception):
         pass
 
-    def init_app(self, app: Flask, db: SQLAlchemy = None, migrate: Migrate = None):
+    def init_app(self, app: Flask, db: SQLAlchemy = None, migrate: Migrate = None, restful: RestfulApi = None):
         """Initialize Ampho
         """
         self.app = app
         app.extensions['ampho'] = self
 
-        # Load configuration
+        # Configuration
         if self._get_config_bool('AMPHO_CONFIG'):
             self._init_config()
 
-        # Initialize logging
+        # Logging
         if self._get_config_bool('AMPHO_LOG'):
             self._init_logging()
 
+        # Database
         if not db:
             db = SQLAlchemy(app)
         self.db = db
 
+        # Migrate
         if not migrate:
             migrate = Migrate(app, db)
         self.migrate = migrate
 
-        # Ensure the instance folder exists
-        os.makedirs(app.instance_path, 0o755, True)
+        # RESTful
+        if not restful:
+            version = app.config.get('AMPHO_RESTFUL_VERSION', '1')
+            prefix = app.config.get('AMPHO_RESTFUL_PREFIX', f'/api/{version}')
+            restful = RestfulApi(app, prefix)
+        self.restful = restful
 
-        # Initialize CLI commands
+        # Submodules
         with app.app_context():
-            from flask_ampho import _cli
+            from flask_ampho import db, auth
 
         logging.info('Ampho %s started', __version__)
 
