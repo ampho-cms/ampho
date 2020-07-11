@@ -1,8 +1,8 @@
 Ampho CMS
 =========
 
-.. image:: https://github.com/ampho-cms/flask_ampho/raw/develop/artwork/logo-transparent.png
-    :width: 256
+.. image:: ./logo.png
+
 
 **Ampho** is a `Flask`_ extension aimed to help developers build fully functional web applications with less efforts.
 
