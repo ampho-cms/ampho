@@ -1,9 +1,6 @@
 Ampho CMS
 =========
 
-.. image:: ./logo.png
-
-
 **Ampho** is a `Flask`_ extension aimed to help developers build fully functional web applications with less efforts.
 
 * `Installation`_

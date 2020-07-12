@@ -1,7 +1,7 @@
 Configuration
 =============
 
-In addition to standard `Flask configuration`_ Ampho proposes its own file based configuration mechanism.
+In addition to standard `Flask configuration`_ Ampho proposes simple file based configuration mechanism.
 
 When Ampho starts, it searches for configuration files in the following order:
 
@@ -20,12 +20,13 @@ For example, some application can have following configuration files set:
 .. sourcecode:: text
 
     /hello-world
+        /app
         /instance
             default.json
             development.json
             production.json
-            home_user@home_host.json
-            prod_user@prod_host.json
+            home_user@dev.test.com.json
+            prod_user@test.com.json
 
 Using this approach, you can store all the application configuration in one place, while Ampho will choose appropriate
 configuration set automatically depending on environment where application runs.

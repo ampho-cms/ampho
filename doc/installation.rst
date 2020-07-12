@@ -25,6 +25,7 @@ Then, to setup Ampho, you should add couple lines in your factory code:
 .. sourcecode:: python
 
     from flask import Flask
+    from flask_ampho import Ampho
 
     def create_app(config_filename):
         app = Flask(__name__)
@@ -35,3 +36,25 @@ Then, to setup Ampho, you should add couple lines in your factory code:
         return app
 
 
+Or, using another popular pattern:
+
+
+.. sourcecode:: python
+
+    from flask import Flask
+    from flask_ampho import Ampho
+
+    ampho = Ampho()
+
+    def create_app(config_filename):
+        app = Flask(__name__)
+        app.config.from_pyfile(config_filename)
+
+        ampho.init_app(app)
+
+        return app
+
+Next: `Configuration`_
+
+
+.. _Configuration: configuration.rst
