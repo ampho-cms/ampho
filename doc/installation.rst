@@ -7,7 +7,7 @@ Ampho can be installed using traditional ``pip`` tool:
 
     pip install -U flask_ampho
 
-Being a regular `Flask extension`_, Ampho provides simple traditional way of its setup:
+Being a regular `Flask extension`_, Ampho provides simple traditional way to setup:
 
 .. sourcecode:: python
 
