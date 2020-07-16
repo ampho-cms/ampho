@@ -1,5 +1,5 @@
-Ampho Configuration
-===================
+Configuration
+=============
 
 In addition to standard `Flask configuration`_ Ampho proposes simple file based configuration mechanism.
 
@@ -45,5 +45,5 @@ If you want completely disable this Ampho feature, you can do this by setting ``
 
 
 .. _Flask configuration: https://flask.palletsprojects.com/en/1.1.x/config/
-.. _Installation::: installation.rst
-.. _Logging:: logging.rst
+.. _Installation: installation.rst
+.. _Logging: logging.rst

@@ -1,5 +1,5 @@
-Ampho Installation
-==================
+Installation
+============
 
 Ampho can be installed using traditional ``pip`` tool:
 
