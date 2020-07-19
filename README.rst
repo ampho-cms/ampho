@@ -14,6 +14,10 @@ Build status
     :target: https://codecov.io/gh/ampho-cms/flask_ampho
     :alt: Code coverage
 
+.. image:: https://readthedocs.org/projects/ampho/badge/?version=develop
+    :target: https://ampho.readthedocs.io/en/develop/?badge=develop
+    :alt: Documentation status
+
 
 Documentation
 -------------
