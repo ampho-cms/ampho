@@ -1,14 +1,14 @@
 Logging
 =======
 
-By default at initialization time Ampho sets up separate root `TimedRotatingFileHandler`_ log handler amd formatter. The
-``when`` argument. Set ``AMPHO_LOG`` to ``0`` if you want to disable this feature.
+By default at initialization time Ampho sets up separate root `TimedRotatingFileHandler`_ log handler amd formatter.
+Set ``AMPHO_LOG`` to ``0`` if you want to disable this feature.
 
 
 Configuration
 -------------
 
-* **int** ``AMPHO_LOG``. Whether to enable Ampho logger. Default is ``1``. Set to ``0`` to disable.
+* **int** ``AMPHO_LOG``. Whether to register Ampho logger. Default is ``1``. Set to ``0`` to disable.
 * **str** ``AMPHO_LOG_DIR``. Log directory location. Default is the ``log`` directory located next to application's
   instance directory.
 * **str** ``AMPHO_LOG_FORMAT``. Log format. Default is ``"%(asctime)s %(levelname)s  %(filename)s:%(lineno)d"`` if the

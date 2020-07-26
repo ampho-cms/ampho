@@ -40,10 +40,4 @@ as well as ``py`` ones.
 If you want completely disable this Ampho feature, you can do this by setting ``AMPHO_LOG`` to ``0``.
 
 
-* Previous: `Installation`_
-* Next: `Logging`_
-
-
 .. _Flask configuration: https://flask.palletsprojects.com/en/1.1.x/config/
-.. _Installation: installation.rst
-.. _Logging: logging.rst

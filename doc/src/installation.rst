@@ -40,8 +40,4 @@ Or, using another popular pattern:
         return app
 
 
-* Next: `Configuration`_
-
-
 .. _Flask extension: https://flask.palletsprojects.com/en/1.1.x/extensions/
-.. _Configuration: configuration.rst

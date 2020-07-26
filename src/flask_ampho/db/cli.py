@@ -62,7 +62,7 @@ def _make_migrations_struct() -> str:
     return tmp_path
 
 
-@ampho.cli_group.command()
+@ampho.cli.command()
 @click.option('-r', '--rev', default='heads')
 @click.option('-s/-S', '--sql/--no-sql', default=False)
 def db_up(rev: str, sql: bool):
@@ -73,7 +73,7 @@ def db_up(rev: str, sql: bool):
     rmtree(m_dir)
 
 
-@ampho.cli_group.command()
+@ampho.cli.command()
 @click.option('-r', '--rev', default='-1')
 @click.option('-s/-S', '--sql/--no-sql', default=False)
 def db_down(rev: str, sql: bool):
@@ -84,7 +84,7 @@ def db_down(rev: str, sql: bool):
     rmtree(m_dir)
 
 
-@ampho.cli_group.command()
+@ampho.cli.command()
 @click.argument('package')
 def db_init(package: str):
     """Initialize a migration environment
@@ -92,7 +92,7 @@ def db_init(package: str):
     flask_migrate.init(package_path(package, 'migrations'))
 
 
-@ampho.cli_group.command()
+@ampho.cli.command()
 @click.argument('package')
 @click.argument('message')
 @click.option('-h', '--head', default='head')
@@ -108,7 +108,7 @@ def db_rev(package: str, message: str, head: str, sql: bool):
     flask_migrate.revision(m_dir, message, False, sql, head, rev_id=f'{package}_{int(time())}')
 
 
-@ampho.cli_group.command()
+@ampho.cli.command()
 @click.option('-v/-V', '--verbose/--no-verbose', default=False)
 def db_heads(verbose: bool):
     """Show current available heads
@@ -118,7 +118,7 @@ def db_heads(verbose: bool):
     rmtree(m_dir)
 
 
-@ampho.cli_group.command()
+@ampho.cli.command()
 @click.option('-v/-V', '--verbose/--no-verbose', default=False)
 def db_current(verbose: bool):
     """Show current revision
@@ -128,7 +128,7 @@ def db_current(verbose: bool):
     rmtree(m_dir)
 
 
-@ampho.cli_group.command()
+@ampho.cli.command()
 @click.option('-r', '--rev', default='heads')
 def db_show(rev: bool):
     """Show the revision denoted by the given symbol

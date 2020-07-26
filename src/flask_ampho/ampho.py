@@ -27,8 +27,8 @@ class Ampho:
         self.migrate = migrate
         self.restful = restful
 
-        self.cli_group = AppGroup('ampho')
-        app.cli.add_command(self.cli_group)
+        self.cli = AppGroup('ampho')
+        app.cli.add_command(self.cli)
 
         self.root_path = path.dirname(__file__)
 
@@ -78,10 +78,11 @@ class Ampho:
 
         # Other parameters
         log_path = path.join(log_dir, self.app.name + '.log')
+        rotate_when = self.app.config.get('AMPHO_LOG_ROTATE_WHEN', 'midnight')
         backup_count = int(self.app.config.get('AMPHO_LOG_BACKUP_COUNT', 30))
 
         # Setup handler
-        handler = TimedRotatingFileHandler(log_path, 'midnight', backupCount=backup_count)
+        handler = TimedRotatingFileHandler(log_path, rotate_when, backupCount=backup_count)
         handler.setFormatter(logging.Formatter(self.app.config.get('AMPHO_LOG_FORMAT', fmt)))
         logging.getLogger().addHandler(handler)
 
