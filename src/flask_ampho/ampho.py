@@ -10,6 +10,7 @@ from os import path
 from socket import gethostname
 from getpass import getuser
 from logging.handlers import TimedRotatingFileHandler
+from blinker import Namespace as BlinkerNamespace
 from flask import Flask
 from flask.cli import AppGroup
 from flask_ampho import __version__
@@ -26,6 +27,7 @@ class Ampho:
         self.db = db
         self.migrate = migrate
         self.restful = restful
+        self.signals = BlinkerNamespace()
 
         self.cli = AppGroup('ampho')
         app.cli.add_command(self.cli)
@@ -44,9 +46,12 @@ class Ampho:
         """Load configuration
         """
         # Ensure config directory
-        default_config_dir = path.abspath(path.join(self.app.instance_path, path.pardir, 'config'))
+        default_config_dir = path.abspath(path.join(self.app.root_path, path.pardir, 'config'))
         config_dir = self.app.config.get('AMPHO_CONFIG_DIR', default_config_dir)
-        os.makedirs(config_dir, 0o755, True)
+
+        if not path.isdir(config_dir):
+            logging.warning(f'Configuration directory is not found at {config_dir}')
+            return
 
         for config_name in ('default', os.getenv('FLASK_ENV', ''), f'{getuser()}@{gethostname()}'):
             for ext in ('.py', '.json'):
@@ -66,7 +71,7 @@ class Ampho:
             logging.getLogger().setLevel(logging.DEBUG)
 
         # Ensure log directory
-        default_log_dir = path.abspath(path.join(self.app.instance_path, path.pardir, 'log'))
+        default_log_dir = path.abspath(path.join(self.app.root_path, path.pardir, 'log'))
         log_dir = self.app.config.get('AMPHO_LOG_DIR', default_log_dir)
         os.makedirs(log_dir, 0o755, True)
 
@@ -105,22 +110,19 @@ class Ampho:
 
         # Database
         if not db:
-            db = SQLAlchemy(app)
-        self.db = db
+            self.db = SQLAlchemy(app)
 
         # Migrate
         if not migrate:
-            migrate = Migrate(app, db)
-        self.migrate = migrate
+            self.migrate = Migrate(app, self.db)
 
         # RESTful
         if not restful:
             version = app.config.get('AMPHO_RESTFUL_VERSION', '1')
             prefix = app.config.get('AMPHO_RESTFUL_PREFIX', f'/api/{version}')
-            restful = RestfulApi(app, prefix)
-        self.restful = restful
+            self.restful = RestfulApi(app, prefix)
 
-        # Submodules
+        # Initialize submodules
         with app.app_context():
             from flask_ampho import db, auth
 

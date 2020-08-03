@@ -60,6 +60,7 @@ setup(
     include_package_data=True,
     python_requires='>=3.6',
     install_requires=[
+        'blinker==1.*',
         'flask==1.*',
         'flask-migrate==2.*',
         'flask-restful==0.*',

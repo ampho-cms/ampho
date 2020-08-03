@@ -9,12 +9,13 @@ import click
 import flask_migrate
 from typing import List, Dict
 from time import time
-from os import path
+from os import path, listdir
 from shutil import rmtree, copytree
 from tempfile import mkdtemp
 from flask import Flask, current_app
 from flask_ampho import Ampho
-from flask_ampho.util import package_path, secho_warning, secho_error
+from flask_ampho.util import package_path, is_dir_empty, secho_warning, secho_error
+from . import signal
 
 app = current_app  # type: Flask
 ampho = app.extensions['ampho']  # type: Ampho
@@ -26,7 +27,7 @@ def _get_migration_packages() -> Dict[str, str]:
     if isinstance(cfg, str):
         cfg = list(filter(bool, map(lambda x: x.strip(), cfg.split(','))))
 
-    cfg.extend(['flask_ampho.auth'])
+    signal.gmp.send(app, packages=cfg)
 
     r = {}
     for pkg_name in cfg:
@@ -63,28 +64,6 @@ def _make_migrations_struct() -> str:
 
 
 @ampho.cli.command()
-@click.option('-r', '--rev', default='heads')
-@click.option('-s/-S', '--sql/--no-sql', default=False)
-def db_up(rev: str, sql: bool):
-    """Upgrade database schema
-    """
-    m_dir = _make_migrations_struct()
-    flask_migrate.upgrade(m_dir, rev, sql)
-    rmtree(m_dir)
-
-
-@ampho.cli.command()
-@click.option('-r', '--rev', default='-1')
-@click.option('-s/-S', '--sql/--no-sql', default=False)
-def db_down(rev: str, sql: bool):
-    """Downgrade database schema
-    """
-    m_dir = _make_migrations_struct()
-    flask_migrate.downgrade(m_dir, rev, sql)
-    rmtree(m_dir)
-
-
-@ampho.cli.command()
 @click.argument('package')
 def db_init(package: str):
     """Initialize a migration environment
@@ -96,8 +75,7 @@ def db_init(package: str):
 @click.argument('package')
 @click.argument('message')
 @click.option('-h', '--head', default='head')
-@click.option('-s/-S', '--sql/--no-sql', default=False)
-def db_rev(package: str, message: str, head: str, sql: bool):
+def db_rev(package: str, message: str, head: str):
     """Create a database schema revision
     """
     m_dir = package_path(package, 'migrations')
@@ -105,16 +83,33 @@ def db_rev(package: str, message: str, head: str, sql: bool):
         secho_error(f"Directory not found: {m_dir}.\nTry the 'ampho db-init {package}' command")
         return
 
-    flask_migrate.revision(m_dir, message, False, sql, head, rev_id=f'{package}_{int(time())}')
+    v_dir = package_path(package, ['migrations', 'versions'])
+    branch = package if is_dir_empty(v_dir) else None
+
+    print('---', v_dir, listdir(v_dir), branch)
+
+    flask_migrate.revision(m_dir, message, False, None, head, branch_label=branch, rev_id=f'{package}_{int(time())}')
 
 
 @ampho.cli.command()
-@click.option('-v/-V', '--verbose/--no-verbose', default=False)
-def db_heads(verbose: bool):
-    """Show current available heads
+@click.option('-s/-S', '--sql/--no-sql', default=False)
+@click.argument('rev', default='heads')
+def db_up(rev: str, sql: bool):
+    """Upgrade database schema
     """
     m_dir = _make_migrations_struct()
-    flask_migrate.heads(m_dir, verbose)
+    flask_migrate.upgrade(m_dir, rev, sql)
+    rmtree(m_dir)
+
+
+@ampho.cli.command()
+@click.option('-s/-S', '--sql/--no-sql', default=False)
+@click.argument('rev', default='-1')
+def db_down(rev: str, sql: bool):
+    """Downgrade database schema
+    """
+    m_dir = _make_migrations_struct()
+    flask_migrate.downgrade(m_dir, rev, sql)
     rmtree(m_dir)
 
 
@@ -129,8 +124,8 @@ def db_current(verbose: bool):
 
 
 @ampho.cli.command()
-@click.option('-r', '--rev', default='heads')
-def db_show(rev: bool):
+@click.argument('rev', default="heads")
+def db_show(rev: str = None):
     """Show the revision denoted by the given symbol
     """
     m_dir = _make_migrations_struct()
