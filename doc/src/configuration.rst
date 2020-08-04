@@ -5,8 +5,7 @@ In addition to standard `Flask configuration`_ Ampho proposes simple file based 
 
 By default Ampho expects a folder existing at location defined by ``AMPHO_CONFIG_DIR`` configuration parameter. This is
 the folder where configuration files should be placed to let Ampho load them at initialization time. By default value of
-the ``AMPHO_CONFIG_DIR`` parameter contains path to the directory ``config`` located next to application's instance
-directory.
+the ``AMPHO_CONFIG_DIR`` parameter contains path to the directory ``config`` located next to the `root path`_.
 
 For example:
 
@@ -14,7 +13,6 @@ For example:
 
     /hello-world
         /app
-        /instance
         /config
             default.json
             development.py
@@ -41,3 +39,4 @@ If you want completely disable this Ampho feature, you can do this by setting ``
 
 
 .. _Flask configuration: https://flask.palletsprojects.com/en/1.1.x/config/
+.. _root path: https://flask.palletsprojects.com/en/1.1.x/api/#flask.Flask.root_path

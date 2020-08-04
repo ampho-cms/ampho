@@ -34,8 +34,8 @@ constructor's arguments:
         return app
 
 
-Access database and migration from the code
--------------------------------------------
+Access database and migration objects
+-------------------------------------
 
 You can access `SQLAlchemy` and `Migration` instances in your code using ``db`` and ``migrate`` properties:
 
@@ -250,11 +250,14 @@ Particular revision:
 Configuration
 -------------
 
+Please refer to the `Flask SQLAlchemy`_ and `Flask Migrate`_ documentation for configuration parameters list and
+explanation.
+
+
 AMPHO_MIGRATION_PACKAGES
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-* **Type**: list of strings or comma-separated string
-* **Description**: specifies package names which provide migrations.
+List of strings or comma-separated string. Specifies package names which provide migrations.
 
 
 .. _SQLAlchemy: https://www.sqlalchemy.org/

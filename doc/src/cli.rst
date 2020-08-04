@@ -1,22 +1,22 @@
-CLI
-===
+Command line interface
+======================
 
 Ampho registers its own Flask `CLI group`_ named ``ampho`` which is used for storing Ampho related CLI commands.
 To see all available commands use following command:
 
-.. sourcecode:: bash
+.. sourcecode:: shell
 
     flask ampho --help
 
 If you plan to use Ampho commands often, it may be convenient to setup `shell alias`_:
 
-.. sourcecode:: bash
+.. sourcecode:: shell
 
     alias ampho='flask ampho'
 
 and then avoid typing ``flask`` while calling commands from ``ampho`` group, i. e.:
 
-.. sourcecode:: bash
+.. sourcecode:: shell
 
     ampho db-up
 
