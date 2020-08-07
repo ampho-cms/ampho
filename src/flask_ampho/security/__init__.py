@@ -7,7 +7,6 @@ __license__ = 'MIT'
 from typing import List
 from flask import Flask, current_app
 from flask_ampho.db import signal
-from . import rest
 
 app = current_app  # type: Flask
 

@@ -6,12 +6,12 @@ Ampho
 Build status
 ------------
 
-.. image:: https://travis-ci.org/ampho-cms/flask_ampho.svg?branch=develop
-    :target: https://travis-ci.org/ampho-cms/flask_ampho
+.. image:: https://travis-ci.org/ampho-cms/ampho.svg?branch=develop
+    :target: https://travis-ci.org/ampho-cms/ampho
     :alt: Build status
 
-.. image:: https://codecov.io/gh/ampho-cms/flask_ampho/branch/develop/graph/badge.svg
-    :target: https://codecov.io/gh/ampho-cms/flask_ampho
+.. image:: https://codecov.io/gh/ampho-cms/ampho/branch/develop/graph/badge.svg
+    :target: https://codecov.io/gh/ampho-cms/ampho
     :alt: Code coverage
 
 .. image:: https://readthedocs.org/projects/ampho/badge/?version=develop
