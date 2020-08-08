@@ -7,18 +7,19 @@ __license__ = 'MIT'
 import logging
 import click
 import flask_migrate
-from typing import List, Dict
+from typing import List, Dict, Union
 from time import time
 from os import path, listdir
 from shutil import rmtree, copytree
 from tempfile import mkdtemp
+from werkzeug.local import LocalProxy
 from flask import Flask, current_app
 from flask_ampho import Ampho
 from flask_ampho.util import package_path, is_dir_empty, secho_warning, secho_error
 from . import signal
 
-app = current_app  # type: Flask
-ampho = app.extensions['ampho']  # type: Ampho
+app = current_app  # type: Union[Flask, LocalProxy]
+ampho = current_app.extensions['ampho']  # type: Ampho
 root_path = ampho.root_path
 
 
@@ -27,7 +28,7 @@ def _get_migration_packages() -> Dict[str, str]:
     if isinstance(cfg, str):
         cfg = list(filter(bool, map(lambda x: x.strip(), cfg.split(','))))
 
-    signal.gmp.send(app, packages=cfg)
+    signal.gmp.send(app._get_current_object(), packages=cfg)
 
     r = {}
     for pkg_name in cfg:

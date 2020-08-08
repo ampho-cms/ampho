@@ -4,25 +4,95 @@ __author__ = 'Alexander Shepetko'
 __email__ = 'a@shepetko.com'
 __license__ = 'MIT'
 
+import os
 import pytest
-from os import PathLike, path
-from flask import Flask
-from flask_ampho import Ampho
+import json
+from socket import gethostname
+from getpass import getuser
+from .base import AmphoTestCase
 
 
-@pytest.fixture
-def instance_path(tmp_path: PathLike) -> str:
-    """Instance path fixture
+class TestAmpho(AmphoTestCase):
+    """Ampho Test Case
     """
-    return path.join(tmp_path, 'instance')
 
+    def test_get_config(self, tmp_path: str):
+        """Test get_config()
+        """
+        # Set configuration directly
+        k = self.rand_str().upper()
+        v = self.rand_str()
+        app, ampho = self.make_app(tmp_path, {k: v})
+        assert ampho.get_config(k) == v
 
-def test_ampho_init(instance_path: PathLike):
-    """Test init
-    """
-    app = Flask(__name__, instance_path=instance_path)
-    app.config.from_mapping({
-        'SQLALCHEMY_DATABASE_URI': 'sqlite://',
-        'SQLALCHEMY_TRACK_MODIFICATIONS': False
-    })
-    Ampho(app)
+        # Set configuration at runtime
+        k = self.rand_str().upper()
+        v = self.rand_str()
+        assert ampho.get_config(k) is None
+        app.config.from_mapping({k: v})
+        assert ampho.get_config(k) == v
+
+        # Set configuration via environment variables
+        k = self.rand_str().upper()
+        v = self.rand_str()
+        assert ampho.get_config(k) is None
+        os.environ[k] = v
+        assert ampho.get_config(k) == v
+
+    def test_get_config_int(self, tmp_path: str):
+        """Test get_config_int()
+        """
+        k = self.rand_str().upper()
+        v = self.rand_int()
+        app, ampho = self.make_app(tmp_path, {k: v})
+
+        assert ampho.get_config_int(k) == v
+
+        app.config.from_mapping({k: self.rand_str()})
+        with pytest.raises(ValueError):
+            assert ampho.get_config_int(k)
+
+    def test_get_config_bool(self, tmp_path: str):
+        """Test get_config_bool()
+        """
+        k = self.rand_str().upper()
+        app, ampho = self.make_app(tmp_path)
+
+        for v in 1, True, '1', 'yes', 'true', 'Yes', 'True':
+            app.config[k] = v
+            assert ampho.get_config_bool(k) == True
+
+        for v in 0, False, '0', 'no', 'false', 'No', 'False':
+            app.config[k] = v
+            assert ampho.get_config_bool(k) == False
+
+    def test_get_config_json(self, tmp_path: str):
+        """Test get_config_json()
+        """
+        k = self.rand_str().upper()
+        c = {self.rand_str(): self.rand_str()}
+        app, ampho = self.make_app(tmp_path, {k: json.dumps(c)})
+
+        assert ampho.get_config_json(k) == c
+
+    def test_load_config_dir(self, tmp_path):
+        """Test load_config_dir()
+        """
+        app, ampho = self.make_app(tmp_path)
+        os.makedirs(app.config['AMPHO_CONFIG_DIR'], 0o755, True)
+
+        values = {}
+        for config_name in ('default', os.getenv('FLASK_ENV', 'production'), f'{getuser()}@{gethostname()}'):
+            for ext in ('.py', '.json'):
+                k = (config_name + ext).upper().replace('.', '_').replace('@', '_')
+                v = self.rand_str()
+                values[k] = v
+                with open(os.path.join(ampho.config_dir, config_name + ext), "w") as f:
+                    if ext == '.json':
+                        json.dump({k: v}, f)
+                    else:
+                        f.write(f'{k}="{v}"')
+
+        ampho.load_config_dir()
+        for k, v in values.items():
+            assert ampho.get_config(k) == v

@@ -1,6 +1,7 @@
 *.egg-info
 .coverage
+.direnv
 .tox
 __pycache__
-htmlcov
 doc/_build
+htmlcov
