@@ -9,7 +9,7 @@ import io
 import re
 from setuptools import find_packages, setup
 
-PKG_NAME = 'flask_ampho'
+PKG_NAME = 'flask-ampho'
 GITHUB_USER = 'ampho-cms'
 
 with io.open('README.rst', 'rt') as f:
@@ -65,5 +65,6 @@ setup(
         'flask-migrate==2.*',
         'flask-restful==0.*',
         'flask-sqlalchemy==2.*',
+        'jwcrypto==0.*',
     ],
 )
