@@ -33,12 +33,6 @@ def make_jwt(claims: dict) -> Tuple[JWT, dict]:
     return t, claims
 
 
-def deserialize_token(s: str) -> JWT:
-    """Deserialize a token from a string
-    """
-    return JWT(jwt=s, key=ampho.jwk)
-
-
 def authorize(f: Callable):
     """Authorization decorator to use in request handlers
     """

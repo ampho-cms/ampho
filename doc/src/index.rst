@@ -1,11 +1,12 @@
 Ampho
 =====
 
-**Ampho** is a `Flask`_ extension aimed to help developers build fully functional web applications with less efforts.
+**Ampho CMS** is a `Flask`_ extension aimed to help developers build fully functional web applications with less
+efforts.
 
 
 .. toctree::
-    :maxdepth: 1
+    :maxdepth: 2
     :caption: Contents:
 
     quickstart
@@ -13,8 +14,8 @@ Ampho
     configuration
     logging
     cli
+    security
     database
-    rest
 
 
 Indices and tables

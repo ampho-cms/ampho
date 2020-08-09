@@ -5,7 +5,7 @@ __email__ = 'a@shepetko.com'
 __license__ = 'MIT'
 
 # Public API
-from .api import make_jwt, deserialize_token, authorize
+from .api import make_jwt, authorize
 
 
 def _init():

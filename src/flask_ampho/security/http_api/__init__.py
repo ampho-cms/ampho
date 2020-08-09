@@ -12,7 +12,7 @@ from .renew import Renew
 
 ampho = current_app.extensions['ampho']  # type: Ampho
 
-PREFIX = ampho.get_config('AMPHO_SECURITY_HTTP_API_PREFIX', '/api/ampho/security')
+PREFIX = ampho.get_config('AMPHO_SECURITY_REST_PREFIX', '/api/security')
 
 api_v1 = Api(current_app, f'{PREFIX}/1')
 api_v1.add_resource(Login, '/login')
