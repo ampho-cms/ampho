@@ -84,7 +84,7 @@ class TestAmpho(AmphoTestCase):
         values = {}
         for config_name in ('default', os.getenv('FLASK_ENV', 'production'), f'{getuser()}@{gethostname()}'):
             for ext in ('.py', '.json'):
-                k = (config_name + ext).upper().replace('.', '_').replace('@', '_')
+                k = (config_name + ext).upper().replace('.', '_').replace('@', '_').replace('-', '_')
                 v = self.rand_str()
                 values[k] = v
                 with open(os.path.join(ampho.config_dir, config_name + ext), "w") as f:
