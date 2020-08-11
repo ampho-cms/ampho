@@ -4,11 +4,10 @@ __author__ = 'Alexander Shepetko'
 __email__ = 'a@shepetko.com'
 __license__ = 'MIT'
 
-import os
 import sys
 import random
 import string
-from typing import Union, Tuple
+from typing import Union
 from os import path, PathLike
 from flask import Flask
 from flask_ampho import Ampho
@@ -17,7 +16,7 @@ from jwcrypto.jwk import JWK
 
 class AmphoTestCase:
     @staticmethod
-    def make_app(tmp_path: Union[PathLike, str], config: dict = None) -> Tuple[Flask, Ampho]:
+    def make_app(tmp_path: Union[PathLike, str], config: dict = None) -> Ampho:
         """Test __init__()
         """
         if config is None:
@@ -32,7 +31,7 @@ class AmphoTestCase:
         app = Flask(__name__, instance_path=path.join(tmp_path, 'instance'))
         app.config.from_mapping(config)
 
-        return app, Ampho(app)
+        return Ampho(app)
 
     @staticmethod
     def rand_int(a: int = 0, b: int = sys.maxsize):

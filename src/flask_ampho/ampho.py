@@ -7,13 +7,12 @@ __license__ = 'MIT'
 import os
 import logging
 import json
-from typing import Any, Optional
+from typing import Any
 from os import path
 from socket import gethostname
 from getpass import getuser
 from logging.handlers import TimedRotatingFileHandler
 from blinker import Namespace as BlinkerNamespace
-from jwcrypto.jwk import JWK
 from flask import Flask
 from flask.cli import AppGroup
 from flask_ampho import __version__
@@ -22,16 +21,16 @@ from flask_migrate import Migrate
 
 
 class Ampho:
-    def __init__(self, app: Flask = None, db: SQLAlchemy = None, migrate: Migrate = None):
+    def __init__(self, app: Flask = None, sqlalchemy: SQLAlchemy = None, migrate: Migrate = None):
         """Init
         """
         self.root_path = path.dirname(__file__)
         self.app = app
-        self.db = db
-        self.migrate = migrate
         self.signals = BlinkerNamespace()
         self.cli = AppGroup('ampho')
-        self.jwk: Optional[JWK] = None
+
+        self.db = None
+        self.security = None
 
         default_config_dir = path.abspath(path.join(app.root_path, path.pardir, 'config'))
         self.config_dir: str = self.get_config('AMPHO_CONFIG_DIR', default_config_dir)
@@ -42,7 +41,7 @@ class Ampho:
         app.cli.add_command(self.cli)
 
         if app:
-            self.init_app(app, db, migrate)
+            self.init_app(app, sqlalchemy, migrate)
 
     def get_config(self, key: str, default: Any = None) -> Any:
         """Get config value
@@ -111,12 +110,7 @@ class Ampho:
         handler.setFormatter(logging.Formatter(self.get_config('AMPHO_LOG_FORMAT', fmt)))
         logging.getLogger().addHandler(handler)
 
-    def teardown(self, exception: Exception):
-        """Teardown hook
-        """
-        pass  # pragma: no cover
-
-    def init_app(self, app: Flask, db: SQLAlchemy = None, migrate: Migrate = None):
+    def init_app(self, app: Flask, sqlalchemy: SQLAlchemy = None, migrate: Migrate = None):
         """Initialize Ampho
         """
         self.app = app
@@ -131,17 +125,13 @@ class Ampho:
             self.init_logging()
 
         # Database
-        if not db:
-            self.db = SQLAlchemy(app)
+        from .db import Db
+        if not sqlalchemy:
+            sqlalchemy = SQLAlchemy(app)
+        self.db = Db(self, sqlalchemy, migrate or Migrate(app, sqlalchemy))
 
-        # Migrate
-        if not migrate:
-            self.migrate = Migrate(app, self.db)
+        if not self.security:
+            from .security import Security
+            self.security = Security(self)
 
-        # Initialize submodules
-        with app.app_context():
-            from flask_ampho import db, security
-
-        logging.info('Ampho %s started', __version__)
-
-        app.teardown_appcontext(self.teardown)
+        logging.info('Ampho %s initialized', __version__)

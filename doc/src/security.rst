@@ -39,7 +39,7 @@ it, check extracted token for validity and performs user authentication and auth
 
     @authorize
     def protected_view(auth: dict):
-        return f'This is highly protected resource. Current user is {auth.login}.'
+        return f'This is highly protected resource. Current user is {auth.get("login")}.'
 
 Is the token is valid and current user is authorized, the decorated functions will receive authorization data in the
 ``auth`` named argument. The 401-response will be returned otherwise.

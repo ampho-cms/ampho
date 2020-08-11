@@ -5,32 +5,12 @@ __email__ = 'a@shepetko.com'
 __license__ = 'MIT'
 
 import logging
-from typing import Callable, Optional, Tuple
-from time import time
+from typing import Callable, Optional
+
 from json import loads
 from flask import current_app, request, abort
 from flask_ampho import Ampho
 from jwcrypto.jwt import JWT
-
-ampho = current_app.extensions['ampho']  # type: Ampho
-_TOKEN_TTL = ampho.get_config_int('AMPHO_SECURITY_TOKEN_TTL', 900)
-
-
-def make_jwt(claims: dict) -> Tuple[JWT, dict]:
-    """Make a signed token
-    """
-    now = int(time())
-    alg = ampho.get_config('AMPHO_SECURITY_JWT_ALG', 'HS256')
-    claims.update({
-        'nbf': now,
-        'exp': now + _TOKEN_TTL
-    })
-
-    t = JWT(header={'alg': alg}, claims=claims)
-    t.validity = _TOKEN_TTL
-    t.make_signed_token(key=ampho.jwk)
-
-    return t, claims
 
 
 def authorize(f: Callable):
@@ -38,6 +18,7 @@ def authorize(f: Callable):
     """
 
     def deco(*args, **kwargs):
+        ampho = current_app.extensions['ampho']  # type: Ampho
         auth = request.headers.get('Authorization')  # type: Optional[str]
         if not (auth and auth.lower().startswith('bearer')):
             abort(401)
@@ -47,7 +28,7 @@ def authorize(f: Callable):
             abort(401)
 
         try:
-            t = JWT(jwt=bearer[1], key=ampho.jwk)
+            t = JWT(jwt=bearer[1], key=ampho.security.jwk)
             kwargs['auth'] = loads(t.claims)
             return f(*args, **kwargs)
 

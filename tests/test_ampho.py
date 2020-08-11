@@ -22,14 +22,14 @@ class TestAmpho(AmphoTestCase):
         # Set configuration directly
         k = self.rand_str().upper()
         v = self.rand_str()
-        app, ampho = self.make_app(tmp_path, {k: v})
+        ampho = self.make_app(tmp_path, {k: v})
         assert ampho.get_config(k) == v
 
         # Set configuration at runtime
         k = self.rand_str().upper()
         v = self.rand_str()
         assert ampho.get_config(k) is None
-        app.config.from_mapping({k: v})
+        ampho.app.config.from_mapping({k: v})
         assert ampho.get_config(k) == v
 
         # Set configuration via environment variables
@@ -44,11 +44,11 @@ class TestAmpho(AmphoTestCase):
         """
         k = self.rand_str().upper()
         v = self.rand_int()
-        app, ampho = self.make_app(tmp_path, {k: v})
+        ampho = self.make_app(tmp_path, {k: v})
 
         assert ampho.get_config_int(k) == v
 
-        app.config.from_mapping({k: self.rand_str()})
+        ampho.app.config.from_mapping({k: self.rand_str()})
         with pytest.raises(ValueError):
             assert ampho.get_config_int(k)
 
@@ -56,14 +56,14 @@ class TestAmpho(AmphoTestCase):
         """Test get_config_bool()
         """
         k = self.rand_str().upper()
-        app, ampho = self.make_app(tmp_path)
+        ampho = self.make_app(tmp_path)
 
         for v in 1, True, '1', 'yes', 'true', 'Yes', 'True':
-            app.config[k] = v
+            ampho.app.config[k] = v
             assert ampho.get_config_bool(k) == True
 
         for v in 0, False, '0', 'no', 'false', 'No', 'False':
-            app.config[k] = v
+            ampho.app.config[k] = v
             assert ampho.get_config_bool(k) == False
 
     def test_get_config_json(self, tmp_path: str):
@@ -71,15 +71,15 @@ class TestAmpho(AmphoTestCase):
         """
         k = self.rand_str().upper()
         c = {self.rand_str(): self.rand_str()}
-        app, ampho = self.make_app(tmp_path, {k: json.dumps(c)})
+        ampho = self.make_app(tmp_path, {k: json.dumps(c)})
 
         assert ampho.get_config_json(k) == c
 
     def test_load_config_dir(self, tmp_path):
         """Test load_config_dir()
         """
-        app, ampho = self.make_app(tmp_path)
-        os.makedirs(app.config['AMPHO_CONFIG_DIR'], 0o755, True)
+        ampho = self.make_app(tmp_path)
+        os.makedirs(ampho.get_config('AMPHO_CONFIG_DIR'), 0o755, True)
 
         values = {}
         for config_name in ('default', os.getenv('FLASK_ENV', 'production'), f'{getuser()}@{gethostname()}'):
