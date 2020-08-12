@@ -20,8 +20,7 @@ class Security:
     def __init__(self, ampho: Ampho):
         """Init
         """
-        self.token_ttl = ampho.get_config_int('AMPHO_SECURITY_TOKEN_TTL', 900)
-        self.token_alg = ampho.get_config('AMPHO_SECURITY_TOKEN_ALG', 'HS256')
+        self.ampho = ampho
 
         k = ampho.get_config_json('AMPHO_SECURITY_KEY')
         if isinstance(k, dict):
@@ -38,6 +37,18 @@ class Security:
         # Register CLI commands
         with ampho.app.app_context():
             from . import _cli
+
+    @property
+    def token_ttl(self) -> int:
+        """Token TTL getter
+        """
+        return self.ampho.get_config_int('AMPHO_SECURITY_TOKEN_TTL', 900)
+
+    @property
+    def token_alg(self) -> str:
+        """Token algorithm getter
+        """
+        return self.ampho.get_config('AMPHO_SECURITY_TOKEN_ALG', 'HS256')
 
     def make_jwt(self, claims: dict) -> Tuple[JWT, dict]:
         """Make a signed token
